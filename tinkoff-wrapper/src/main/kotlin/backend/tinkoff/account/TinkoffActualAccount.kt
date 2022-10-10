@@ -1,7 +1,8 @@
-package backend.tinkoff
+package backend.tinkoff.account
 
 import backend.tinkoff.error.FigiNotFoundError
 import backend.tinkoff.error.TinkoffInternalError
+import backend.tinkoff.error.wrapTinkoffRequest
 import backend.tinkoff.model.*
 import backend.tinkoff.response.CancelOrderResponse
 import backend.tinkoff.response.OrderState
@@ -104,11 +105,4 @@ class TinkoffActualAccount(
             PostOrderResponse.fromTinkoff(postOrderResponse)
         }
     }
-
-    private fun <T> wrapTinkoffRequest(requestToTinkoffApi: () -> T): Result<T> =
-        try {
-            Result.success(requestToTinkoffApi())
-        } catch (e: Throwable) {
-            Result.failure(e)
-        }
 }

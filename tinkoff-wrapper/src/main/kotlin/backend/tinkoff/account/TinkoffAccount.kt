@@ -1,4 +1,4 @@
-package backend.tinkoff
+package backend.tinkoff.account
 
 import backend.tinkoff.model.Figi
 import backend.tinkoff.model.LimitedPrice

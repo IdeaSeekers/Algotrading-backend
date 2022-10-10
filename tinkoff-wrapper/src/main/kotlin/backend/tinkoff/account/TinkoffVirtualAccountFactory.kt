@@ -1,4 +1,4 @@
-package backend.tinkoff
+package backend.tinkoff.account
 
 class TinkoffVirtualAccountFactory(
     private val actualAccount: TinkoffActualAccount,
