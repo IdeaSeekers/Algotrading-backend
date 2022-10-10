@@ -47,8 +47,7 @@ class TinkoffActualAccount(
         if (lastPrices.size != 1) {
             return Result.failure(TinkoffInternalError())
         }
-        val tinkoffQuotation = lastPrices.first().price
-        val quotation = Quotation(tinkoffQuotation.units, tinkoffQuotation.nano)
+        val quotation = Quotation.from(lastPrices.first().price)
         if (quotation.isEqualToZero()) {
             return Result.failure(FigiNotFoundError())
         }
