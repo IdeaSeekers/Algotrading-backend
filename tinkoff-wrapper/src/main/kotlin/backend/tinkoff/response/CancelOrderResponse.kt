@@ -1,7 +1,5 @@
 package backend.tinkoff.response
 
-import java.sql.Timestamp
+import java.time.Instant
 
-data class CancelOrderResponse(
-    val timestamp: Timestamp,
-)
+data class CancelOrderResponse(val instant: Instant)

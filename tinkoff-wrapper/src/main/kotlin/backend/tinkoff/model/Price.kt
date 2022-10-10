@@ -1,7 +1,18 @@
 package backend.tinkoff.model
 
-sealed interface Price
+import ru.tinkoff.piapi.contract.v1.OrderType
+import ru.tinkoff.piapi.contract.v1.Quotation as TinkoffQuotation
 
-object MarketPrice : Price
+sealed interface Price {
+    fun splitForTinkoff(): Pair<TinkoffQuotation, OrderType>
+}
 
-data class LimitedPrice(val quotation: Quotation) : Price
+object MarketPrice : Price {
+    override fun splitForTinkoff(): Pair<TinkoffQuotation, OrderType> =
+        Pair(Quotation.zero().toTinkoff(), OrderType.ORDER_TYPE_MARKET)
+}
+
+data class LimitedPrice(val quotation: Quotation) : Price {
+    override fun splitForTinkoff(): Pair<TinkoffQuotation, OrderType> =
+        Pair(quotation.toTinkoff(), OrderType.ORDER_TYPE_LIMIT)
+}

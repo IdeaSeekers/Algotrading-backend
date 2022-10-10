@@ -5,41 +5,75 @@ import backend.tinkoff.error.TinkoffInternalError
 import backend.tinkoff.model.*
 import backend.tinkoff.response.CancelOrderResponse
 import backend.tinkoff.response.OrderState
-import backend.tinkoff.response.PositionsResponse
+import backend.tinkoff.response.Positions
 import backend.tinkoff.response.PostOrderResponse
+import ru.tinkoff.piapi.contract.v1.OrderDirection
+import ru.tinkoff.piapi.contract.v1.PriceType
 import ru.tinkoff.piapi.core.InvestApi
+import java.util.*
 
 class TinkoffActualAccount(
-    private val token: UserToken,
+    token: UserToken,
     private val accountId: AccountId,
 ) : TinkoffAccount {
 
-    override fun postBuyOrder(figi: Figi, quantity: Long, price: Price): Result<PostOrderResponse> {
-        TODO("Not yet implemented")
-    }
+    override fun postBuyOrder(figi: Figi, quantity: UInt, price: Price): Result<PostOrderResponse> =
+        postOrder(figi, quantity, price, OrderDirection.ORDER_DIRECTION_BUY)
 
-    override fun postSellOrder(figi: Figi, quantity: Long, price: Price): Result<PostOrderResponse> {
-        TODO("Not yet implemented")
-    }
+    override fun postSellOrder(figi: Figi, quantity: UInt, price: Price): Result<PostOrderResponse> =
+        postOrder(figi, quantity, price, OrderDirection.ORDER_DIRECTION_SELL)
 
     override fun cancelOrder(orderId: OrderId): Result<CancelOrderResponse> {
-        TODO("Not yet implemented")
+        val cancelOrderResponseFuture = investApi.ordersService
+            .cancelOrder(accountId, orderId)
+
+        return wrapTinkoffRequest {
+            val cancellationInstant = cancelOrderResponseFuture.get()
+            CancelOrderResponse(cancellationInstant)
+        }
     }
 
-    override fun replaceOrder(orderId: OrderId, quantity: Long, price: Price): Result<PostOrderResponse> {
-        TODO("Not yet implemented")
+    override fun replaceOrder(orderId: OrderId, quantity: UInt, price: LimitedPrice): Result<PostOrderResponse> {
+        val idempotencyKey = UUID.randomUUID().toString()
+        val priceType = PriceType.PRICE_TYPE_UNSPECIFIED
+
+        val replaceOrderResponseFuture = investApi.ordersService
+            .replaceOrder(accountId, quantity.toLong(), price.quotation.toTinkoff(), idempotencyKey, orderId, priceType)
+
+        return wrapTinkoffRequest {
+            val replaceOrderResponse = replaceOrderResponseFuture.get()
+            PostOrderResponse.fromTinkoff(replaceOrderResponse)
+        }
     }
 
     override fun getOrderStatus(orderId: OrderId): Result<OrderState> {
-        TODO("Not yet implemented")
+        val orderStateFuture = investApi.ordersService
+            .getOrderState(accountId, orderId)
+
+        return wrapTinkoffRequest {
+            val orderState = orderStateFuture.get()
+            OrderState.fromTinkoff(orderState)
+        }
     }
 
     override fun getOpenOrders(): Result<List<OrderState>> {
-        TODO("Not yet implemented")
+        val orderStatesFuture = investApi.ordersService
+            .getOrders(accountId)
+
+        return wrapTinkoffRequest {
+            val orderStates = orderStatesFuture.get()
+            orderStates.map(OrderState::fromTinkoff)
+        }
     }
 
-    override fun getPositions(): Result<PositionsResponse> {
-        TODO("Not yet implemented")
+    override fun getPositions(): Result<Positions> {
+        val positionsFuture = investApi.operationsService
+            .getPositions(accountId)
+
+        return wrapTinkoffRequest {
+            val positions = positionsFuture.get()
+            Positions.fromTinkoff(positions)
+        }
     }
 
     fun getLastPrice(figi: Figi): Result<Quotation> {
@@ -47,7 +81,7 @@ class TinkoffActualAccount(
         if (lastPrices.size != 1) {
             return Result.failure(TinkoffInternalError())
         }
-        val quotation = Quotation.from(lastPrices.first().price)
+        val quotation = Quotation.fromTinkoff(lastPrices.first().price)
         if (quotation.isEqualToZero()) {
             return Result.failure(FigiNotFoundError())
         }
@@ -56,5 +90,25 @@ class TinkoffActualAccount(
 
     // internal
 
-    private val investApi = InvestApi.create(token)
+    private val investApi = InvestApi.createSandbox(token)
+
+    private fun postOrder(figi: Figi, quantity: UInt, price: Price, orderDirection: OrderDirection): Result<PostOrderResponse> {
+        val (quotation, orderType) = price.splitForTinkoff()
+        val orderId = UUID.randomUUID().toString()
+
+        val postOrderResponseFuture = investApi.ordersService
+            .postOrder(figi, quantity.toLong(), quotation, orderDirection, accountId, orderType, orderId)
+
+        return wrapTinkoffRequest {
+            val postOrderResponse = postOrderResponseFuture.get()
+            PostOrderResponse.fromTinkoff(postOrderResponse)
+        }
+    }
+
+    private fun <T> wrapTinkoffRequest(requestToTinkoffApi: () -> T): Result<T> =
+        try {
+            Result.success(requestToTinkoffApi())
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
 }
