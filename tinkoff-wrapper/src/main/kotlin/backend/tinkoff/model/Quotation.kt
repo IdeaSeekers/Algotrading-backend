@@ -16,6 +16,41 @@ data class Quotation(
             .setNano(nano.toInt())
             .build()
 
+    operator fun plus(other: Quotation): Quotation {
+        val allNano = nano + other.nano
+        val newUnits = units + other.units + allNano / maxNano
+        val newNano = allNano % maxNano
+        return Quotation(newUnits, newNano)
+    }
+
+    operator fun minus(other: Quotation): Quotation? {
+        if (this < other)
+            return null
+        return if (nano < other.nano)
+            Quotation(units - other.units - 1U, maxNano + nano - other.nano)
+        else
+            Quotation(units - other.units, nano - other.nano)
+    }
+
+    operator fun times(times: UInt): Quotation {
+        val allNano: Long = nano.toLong() * times.toLong()
+        val newUnits = (units.toLong() * times.toLong() + allNano / maxNano.toLong()).toUInt()
+        val newNano = (allNano % maxNano.toLong()).toUInt()
+        return Quotation(newUnits, newNano)
+    }
+
+    operator fun compareTo(other: Quotation): Int {
+        if (units < other.units)
+            return -1
+        if (units > other.units)
+            return +1
+        if (nano < other.nano)
+            return -1
+        if (nano > other.nano)
+            return +1
+        return 0
+    }
+
     companion object {
 
         fun zero(): Quotation =
@@ -24,4 +59,8 @@ data class Quotation(
         fun fromTinkoff(quotation: TinkoffQuotation): Quotation =
             Quotation(quotation.units.toUInt(), quotation.nano.toUInt())
     }
+
+    // internal
+
+    private val maxNano = 1e9.toUInt()
 }

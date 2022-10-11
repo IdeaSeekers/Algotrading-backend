@@ -6,7 +6,7 @@ import backend.tinkoff.error.wrapTinkoffRequest
 import backend.tinkoff.model.*
 import backend.tinkoff.response.CancelOrderResponse
 import backend.tinkoff.response.OrderState
-import backend.tinkoff.response.Positions
+import backend.tinkoff.response.PositionsResponse
 import backend.tinkoff.response.PostOrderResponse
 import ru.tinkoff.piapi.contract.v1.OrderDirection
 import ru.tinkoff.piapi.contract.v1.PriceType
@@ -67,13 +67,13 @@ class TinkoffActualAccount(
         }
     }
 
-    override fun getPositions(): Result<Positions> {
+    override fun getPositions(): Result<PositionsResponse> {
         val positionsFuture = investApi.operationsService
             .getPositions(accountId)
 
         return wrapTinkoffRequest {
             val positions = positionsFuture.get()
-            Positions.fromTinkoff(positions)
+            PositionsResponse.fromTinkoff(positions)
         }
     }
 

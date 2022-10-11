@@ -6,12 +6,12 @@ import backend.tinkoff.model.Security
 import ru.tinkoff.piapi.core.models.Positions as TinkoffPositions
 import java.math.BigDecimal
 
-data class Positions(
-    val money: List<Currency>,
+data class PositionsResponse(
+    val currencies: List<Currency>,
     val securities: List<Security>,
 ) {
     companion object {
-        fun fromTinkoff(tinkoffPositions: TinkoffPositions): Positions {
+        fun fromTinkoff(tinkoffPositions: TinkoffPositions): PositionsResponse {
             val money = tinkoffPositions.money.map {
                 val (bigUnits, bigNano) = it.value.divideAndRemainder(BigDecimal.ONE)
                 val units = bigUnits.toLong().toUInt()
@@ -21,7 +21,7 @@ data class Positions(
             val securities = tinkoffPositions.securities.map {
                 Security(it.figi, it.balance.toUInt())
             }
-            return Positions(money, securities)
+            return PositionsResponse(money, securities)
         }
     }
 }

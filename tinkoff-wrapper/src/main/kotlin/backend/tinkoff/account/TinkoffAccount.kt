@@ -6,7 +6,7 @@ import backend.tinkoff.model.OrderId
 import backend.tinkoff.model.Price
 import backend.tinkoff.response.CancelOrderResponse
 import backend.tinkoff.response.OrderState
-import backend.tinkoff.response.Positions
+import backend.tinkoff.response.PositionsResponse
 import backend.tinkoff.response.PostOrderResponse
 
 interface TinkoffAccount {
@@ -23,5 +23,5 @@ interface TinkoffAccount {
 
     fun getOpenOrders(): Result<List<OrderState>>
 
-    fun getPositions(): Result<Positions>
+    fun getPositions(): Result<PositionsResponse>
 }
