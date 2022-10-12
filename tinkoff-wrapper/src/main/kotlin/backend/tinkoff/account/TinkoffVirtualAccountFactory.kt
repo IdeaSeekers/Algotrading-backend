@@ -13,10 +13,12 @@ class TinkoffVirtualAccountFactory(
 
     fun openVirtualAccount(withAvailablePositions: List<Position>): Result<TinkoffVirtualAccount> =
         tryUpdateAvailablePositions(withAvailablePositions).map {
+            val initialCurrencies = withAvailablePositions.filterIsInstance<Currency>()
+            val initialSecurities = withAvailablePositions.filterIsInstance<Security>()
             val virtualAccount = TinkoffVirtualAccount(
                 actualAccount,
-                availableCurrencies.clone(),
-                availableSecurities.clone(),
+                CurrencyStorage.fromList(initialCurrencies),
+                SecurityStorage.fromList(initialSecurities),
             )
             return Result.success(virtualAccount)
         }

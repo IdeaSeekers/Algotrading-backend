@@ -48,9 +48,6 @@ class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
         }
     }
 
-    fun clone(): CurrencyStorage =
-        CurrencyStorage(availableCurrencies)
-
     // internal
 
     private val availableCurrencies: MutableMap<IsoCode, Currency> =

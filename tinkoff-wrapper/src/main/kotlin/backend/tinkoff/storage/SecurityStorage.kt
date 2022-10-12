@@ -48,9 +48,6 @@ class SecurityStorage(initialSecurities: Map<Figi, Security>) {
         }
     }
 
-    fun clone(): SecurityStorage =
-        SecurityStorage(availableSecurities)
-
     // internal
 
     private val availableSecurities: MutableMap<Figi, Security> =
