@@ -22,6 +22,7 @@ class TinkoffVirtualAccount(
         }
         return actualAccount.postBuyOrder(figi, quantity, price).onSuccess {
             onPostBuyOrder(it)
+            onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
         }
     }
 
@@ -31,6 +32,7 @@ class TinkoffVirtualAccount(
         }
         return actualAccount.postSellOrder(figi, quantity, price).onSuccess {
             onPostSellOrder(it)
+            onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
         }
     }
 
@@ -51,13 +53,13 @@ class TinkoffVirtualAccount(
         return actualAccount.replaceOrder(orderId, quantity, price).onSuccess {
             onCancelOrder(OrderState.fromPostOrderResponse(it))
             onPostOrder(it)
+            onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
         }
     }
 
     override fun getOrderStatus(orderId: OrderId): Result<OrderState> {
         return actualAccount.getOrderStatus(orderId).onSuccess {
-            if (it.status == OrderStatus.FILL)
-                onSuccessOrder(it)
+            onSuccessOrderIfExecuted(it)
         }
     }
 
@@ -68,6 +70,7 @@ class TinkoffVirtualAccount(
         }
 
     override fun getPositions(): Result<PositionsResponse> {
+        getOpenOrders() // to sync
         val virtualPositionsResponse = PositionsResponse(
             availableCurrencies.getAll(),
             availableSecurities.getAll(),
@@ -99,7 +102,7 @@ class TinkoffVirtualAccount(
     private fun computeExtraRequestedQuotation(oldOrder: OrderState, quantity: UInt, price: Price): Quotation {
         val oldRequestedQuotation = oldOrder.totalCost.quotation
         val newRequestedQuotation = computeTotalRequestedQuotation(oldOrder.figi, quantity, price)
-        return (oldRequestedQuotation - newRequestedQuotation) ?: Quotation.zero()
+        return (newRequestedQuotation - oldRequestedQuotation) ?: Quotation.zero()
     }
 
     // validation
@@ -154,7 +157,7 @@ class TinkoffVirtualAccount(
 
     private fun onCancelBuyOrder(orderState: OrderState) {
         myOpenOrders.remove(orderState.orderId) ?: return
-        availableCurrencies.decrease(orderState.totalCost)
+        availableCurrencies.increase(orderState.totalCost)
     }
 
     // OrderState.SELL callbacks
@@ -196,6 +199,11 @@ class TinkoffVirtualAccount(
             OrderDirection.BUY -> onSuccessBuyOrder(orderState)
             OrderDirection.SELL -> onSuccessSellOrder(orderState)
         }
+    }
+
+    private fun onSuccessOrderIfExecuted(orderState: OrderState) {
+        if (orderState.status == OrderStatus.FILL)
+            onSuccessOrder(orderState)
     }
 
     private fun onCancelOrder(orderState: OrderState) {

@@ -27,17 +27,18 @@ class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
         return requestedCurrency.quotation <= availableCurrency.quotation
     }
 
-    fun increase(by: Currency) =
+    fun increase(by: Currency): Boolean =
         updateWith(by, Currency::plus)
 
-    fun decrease(by: Currency) =
+    fun decrease(by: Currency): Boolean =
         updateWith(by, Currency::minus)
 
-    fun updateWith(currency: Currency, mapping: (Currency, Currency) -> Currency?) {
+    fun updateWith(currency: Currency, mapping: (Currency, Currency) -> Currency?): Boolean {
         val oldValue = availableCurrencies[currency.isoCode]
         val newValue = (if (oldValue == null) currency else mapping(oldValue, currency))
-            ?: error("Cannot CurrencyStorage update with currency = $currency")
+            ?: return false
         availableCurrencies[currency.isoCode] = newValue
+        return true
     }
 
     fun mergeWith(currencies: List<Currency>) {
