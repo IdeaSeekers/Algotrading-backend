@@ -4,19 +4,27 @@ import backend.tinkoff.error.CannotOpenVirtualAccountError
 import backend.tinkoff.error.waitForSuccess
 import backend.tinkoff.model.*
 import backend.tinkoff.response.PositionsResponse
+import backend.tinkoff.storage.CurrencyStorage
+import backend.tinkoff.storage.SecurityStorage
 
 class TinkoffVirtualAccountFactory(
     private val actualAccount: TinkoffActualAccount,
 ) {
 
     fun openVirtualAccount(withAvailablePositions: List<Position>): Result<TinkoffVirtualAccount> =
-        updateAvailablePositions(withAvailablePositions).map {
-            val virtualAccount = TinkoffVirtualAccount(actualAccount, withAvailablePositions)
+        tryUpdateAvailablePositions(withAvailablePositions).map {
+            val virtualAccount = TinkoffVirtualAccount(
+                actualAccount,
+                availableCurrencies.clone(),
+                availableSecurities.clone(),
+            )
             return Result.success(virtualAccount)
         }
 
     fun closeVirtualAccount(virtualAccount: TinkoffVirtualAccount) {
-        TODO()
+        val positions = virtualAccount.getPositions().getOrThrow()
+         availableCurrencies.mergeWith(positions.currencies)
+         availableSecurities.mergeWith(positions.securities)
     }
 
     // internal
@@ -25,53 +33,27 @@ class TinkoffVirtualAccountFactory(
         actualAccount.getPositions()
     }
 
-    private val availableCurrencies: MutableMap<IsoCode, Currency> =
-        initialAvailablePositions.currencies
-            .groupBy { it.isoCode }
-            .mapValues { (_, currencies) ->
-                currencies.reduce { acc, value -> (acc + value)!! }
-            }
-            .toMutableMap()
+    private val availableCurrencies = CurrencyStorage.fromList(initialAvailablePositions.currencies)
 
-    private val availableSecurities: MutableMap<Figi, Security> =
-        initialAvailablePositions.securities
-            .groupBy { it.figi }
-            .mapValues { (_, securities) ->
-                securities.reduce { acc, security -> (acc + security)!! }
-            }
-            .toMutableMap()
+    private val availableSecurities = SecurityStorage.fromList(initialAvailablePositions.securities)
 
-    private fun updateAvailablePositions(requestPositions: List<Position>): Result<Unit> {
-        val leftAvailablePositions = requestPositions.mapNotNull { position ->
+    private fun tryUpdateAvailablePositions(requestPositions: List<Position>): Result<Unit> {
+        val enoughAvailablePositions = requestPositions.all { position ->
             when (position) {
-                is Currency -> leftAvailableCurrency(position)
-                is Security -> leftAvailableSecurity(position)
+                is Currency -> availableCurrencies.hasEnough(position)
+                is Security -> availableSecurities.hasEnough(position)
             }
         }
-        if (requestPositions.size != leftAvailablePositions.size) // contains nulls
+        if (!enoughAvailablePositions)
             return Result.failure(CannotOpenVirtualAccountError("Cannot provide all requested positions"))
 
-        leftAvailablePositions.forEach { leftAvailablePosition ->
-            when (leftAvailablePosition) {
-                is Currency ->
-                    availableCurrencies[leftAvailablePosition.isoCode] = leftAvailablePosition
-                is Security ->
-                    availableSecurities[leftAvailablePosition.figi] = leftAvailablePosition
+        requestPositions.forEach { position ->
+            when (position) {
+                is Currency -> availableCurrencies.decrease(position)
+                is Security -> availableSecurities.decrease(position)
             }
         }
 
         return Result.success(Unit)
-    }
-
-    private fun leftAvailableCurrency(requestCurrency: Currency): Currency? {
-        val availableCurrency = availableCurrencies[requestCurrency.isoCode]
-            ?: return null // no such currency
-        return availableCurrency - requestCurrency // == null if request > available
-    }
-
-    private fun leftAvailableSecurity(requestSecurity: Security): Security? {
-        val availableSecurity = availableSecurities[requestSecurity.figi]
-            ?: return null // no such security
-        return availableSecurity - requestSecurity  // == null if request > available
     }
 }

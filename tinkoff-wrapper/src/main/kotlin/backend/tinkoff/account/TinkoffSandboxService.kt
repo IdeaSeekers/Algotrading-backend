@@ -18,7 +18,7 @@ class TinkoffSandboxService(token: String) {
             sandboxService.closeAccount(accountId).get()
         }
 
-    fun payIn(accountId: AccountId, rubles: UInt): Result<Unit> =
+    fun sandboxPayIn(accountId: AccountId, rubles: UInt): Result<Unit> =
         wrapTinkoffRequest {
             val moneyValue = Currency("RUB", Quotation(rubles, 0U)).toMoneyValue()
             sandboxService.payIn(accountId, moneyValue).get()

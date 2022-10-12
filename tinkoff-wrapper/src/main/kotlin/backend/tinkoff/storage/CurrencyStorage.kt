@@ -1,10 +1,13 @@
-package backend.tinkoff.model
+package backend.tinkoff.storage
+
+import backend.tinkoff.model.Currency
+import backend.tinkoff.model.IsoCode
 
 class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
 
     companion object {
-        fun fromList(initialCurrencies: List<Currency>) = CurrencyStorage(
-            initialCurrencies
+        fun fromList(initialCurrenciesList: List<Currency>) = CurrencyStorage(
+            initialCurrenciesList
                 .groupBy { it.isoCode }
                 .mapValues { (_, currencies) ->
                     currencies.reduce { acc, value -> (acc + value)!! }
@@ -14,6 +17,9 @@ class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
 
     fun get(isoCode: IsoCode): Currency? =
         availableCurrencies[isoCode]
+
+    fun getAll(): List<Currency> =
+        availableCurrencies.values.toList()
 
     fun hasEnough(requestedCurrency: Currency): Boolean {
         val availableCurrency = availableCurrencies[requestedCurrency.isoCode]
@@ -35,6 +41,15 @@ class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
         availableCurrencies[currency.isoCode] = newValue
         return true
     }
+
+    fun mergeWith(currencies: List<Currency>) {
+        currencies.forEach { currency ->
+            availableCurrencies.merge(currency.isoCode, currency, Currency::plus)
+        }
+    }
+
+    fun clone(): CurrencyStorage =
+        CurrencyStorage(availableCurrencies)
 
     // internal
 
