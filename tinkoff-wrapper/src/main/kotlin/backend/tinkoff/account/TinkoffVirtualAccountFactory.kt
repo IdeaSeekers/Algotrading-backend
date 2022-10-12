@@ -25,8 +25,8 @@ class TinkoffVirtualAccountFactory(
 
     fun closeVirtualAccount(virtualAccount: TinkoffVirtualAccount) {
         val positions = virtualAccount.getPositions().getOrThrow()
-         availableCurrencies.mergeWith(positions.currencies)
-         availableSecurities.mergeWith(positions.securities)
+         positions.currencies.forEach(availableCurrencies::forceIncrease)
+         positions.securities.forEach(availableSecurities::forceIncrease)
     }
 
     // internal
@@ -51,8 +51,8 @@ class TinkoffVirtualAccountFactory(
 
         requestPositions.forEach { position ->
             when (position) {
-                is Currency -> availableCurrencies.decrease(position)
-                is Security -> availableSecurities.decrease(position)
+                is Currency -> availableCurrencies.forceDecrease(position)
+                is Security -> availableSecurities.forceDecrease(position)
             }
         }
 

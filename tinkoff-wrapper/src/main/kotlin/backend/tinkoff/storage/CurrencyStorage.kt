@@ -2,6 +2,7 @@ package backend.tinkoff.storage
 
 import backend.tinkoff.model.Currency
 import backend.tinkoff.model.IsoCode
+import backend.tinkoff.model.Quotation
 
 class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
 
@@ -22,6 +23,8 @@ class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
         availableCurrencies.values.toList()
 
     fun hasEnough(requestedCurrency: Currency): Boolean {
+        if (requestedCurrency.quotation == Quotation.zero())
+            return true
         val availableCurrency = availableCurrencies[requestedCurrency.isoCode]
             ?: return false
         return requestedCurrency.quotation <= availableCurrency.quotation
@@ -33,18 +36,22 @@ class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
     fun decrease(by: Currency): Boolean =
         updateWith(by, Currency::minus)
 
+    fun forceIncrease(by: Currency) {
+        if (!increase(by))
+            error("Cannot increase CurrencyStorage by currency: $by")
+    }
+
+    fun forceDecrease(by: Currency) {
+        if (!decrease(by))
+            error("Cannot decrease CurrencyStorage by currency: $by")
+    }
+
     fun updateWith(currency: Currency, mapping: (Currency, Currency) -> Currency?): Boolean {
         val oldValue = availableCurrencies[currency.isoCode]
         val newValue = (if (oldValue == null) currency else mapping(oldValue, currency))
             ?: return false
         availableCurrencies[currency.isoCode] = newValue
         return true
-    }
-
-    fun mergeWith(currencies: List<Currency>) {
-        currencies.forEach { currency ->
-            availableCurrencies.merge(currency.isoCode, currency, Currency::plus)
-        }
     }
 
     // internal

@@ -13,6 +13,12 @@ object MarketPrice : Price {
 }
 
 data class LimitedPrice(val quotation: Quotation) : Price {
+
     override fun splitForTinkoff(): Pair<TinkoffQuotation, OrderType> =
         Pair(quotation.toTinkoff(), OrderType.ORDER_TYPE_LIMIT)
+
+    companion object {
+        fun of(units: UInt, nano: UInt) =
+            LimitedPrice(Quotation(units, nano))
+    }
 }

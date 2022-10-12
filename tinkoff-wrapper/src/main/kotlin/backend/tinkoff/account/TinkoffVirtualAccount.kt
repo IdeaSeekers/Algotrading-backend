@@ -51,7 +51,7 @@ class TinkoffVirtualAccount(
             return Result.failure(it)
         }
         return actualAccount.replaceOrder(orderId, quantity, price).onSuccess {
-            onCancelOrder(OrderState.fromPostOrderResponse(it))
+            onCancelOrder(orderToReplace)
             onPostOrder(it)
             onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
         }
@@ -146,18 +146,18 @@ class TinkoffVirtualAccount(
 
     private fun onPostBuyOrder(postOrderResponse: PostOrderResponse) {
         myOpenOrders[postOrderResponse.orderId] = OrderState.fromPostOrderResponse(postOrderResponse)
-        availableCurrencies.decrease(postOrderResponse.totalCost)
+        availableCurrencies.forceDecrease(postOrderResponse.totalCost)
     }
 
     private fun onSuccessBuyOrder(orderState: OrderState) {
         myOpenOrders.remove(orderState.orderId) ?: return
         val purchasedSecurity = Security(orderState.figi, orderState.lotsExecuted)
-        availableSecurities.increase(purchasedSecurity)
+        availableSecurities.forceIncrease(purchasedSecurity)
     }
 
     private fun onCancelBuyOrder(orderState: OrderState) {
         myOpenOrders.remove(orderState.orderId) ?: return
-        availableCurrencies.increase(orderState.totalCost)
+        availableCurrencies.forceIncrease(orderState.totalCost)
     }
 
     // OrderState.SELL callbacks
@@ -165,18 +165,18 @@ class TinkoffVirtualAccount(
     private fun onPostSellOrder(postOrderResponse: PostOrderResponse) {
         myOpenOrders[postOrderResponse.orderId] = OrderState.fromPostOrderResponse(postOrderResponse)
         val requestedSecurity = Security(postOrderResponse.figi, postOrderResponse.lotsRequested)
-        availableSecurities.decrease(requestedSecurity)
+        availableSecurities.forceDecrease(requestedSecurity)
     }
 
     private fun onSuccessSellOrder(orderState: OrderState) {
         myOpenOrders.remove(orderState.orderId) ?: return
-        availableCurrencies.increase(orderState.totalCost)
+        availableCurrencies.forceIncrease(orderState.totalCost)
     }
 
     private fun onCancelSellOrder(orderState: OrderState) {
         myOpenOrders.remove(orderState.orderId) ?: return
         val requestedSecurity = Security(orderState.figi, orderState.lotsRequested)
-        availableSecurities.increase(requestedSecurity)
+        availableSecurities.forceIncrease(requestedSecurity)
     }
 
     // Direction managers
