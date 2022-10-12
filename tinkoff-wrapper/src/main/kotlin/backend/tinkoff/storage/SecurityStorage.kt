@@ -27,19 +27,17 @@ class SecurityStorage(initialSecurities: Map<Figi, Security>) {
         return requestedSecurity.balance <= availableSecurity.balance
     }
 
-    fun increase(by: Security): Boolean =
-        updateWith(by, Security::minus)
-
-    fun decrease(by: Security): Boolean =
+    fun increase(by: Security) =
         updateWith(by, Security::plus)
 
-    fun updateWith(security: Security, mapping: (Security, Security) -> Security?): Boolean {
+    fun decrease(by: Security) =
+        updateWith(by, Security::minus)
+
+    fun updateWith(security: Security, mapping: (Security, Security) -> Security?) {
         val oldValue = availableSecurities[security.figi]
-            ?: return false
-        val newValue = mapping(oldValue, security)
-            ?: return false
+        val newValue = (if (oldValue == null) security else mapping(oldValue, security))
+            ?: error("Cannot SecurityStorage update with security = $security")
         availableSecurities[security.figi] = newValue
-        return true
     }
 
     fun mergeWith(securities: List<Security>) {

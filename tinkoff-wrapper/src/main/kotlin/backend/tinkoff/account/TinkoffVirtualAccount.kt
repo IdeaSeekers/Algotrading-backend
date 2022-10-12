@@ -29,7 +29,7 @@ class TinkoffVirtualAccount(
         validateSellOrder(figi, quantity).onFailure {
             return Result.failure(it)
         }
-        return actualAccount.postBuyOrder(figi, quantity, price).onSuccess {
+        return actualAccount.postSellOrder(figi, quantity, price).onSuccess {
             onPostSellOrder(it)
         }
     }
@@ -49,20 +49,21 @@ class TinkoffVirtualAccount(
             return Result.failure(it)
         }
         return actualAccount.replaceOrder(orderId, quantity, price).onSuccess {
-            onCancelOrder(orderToReplace)
-            onPostOrder(orderToReplace)
+            onCancelOrder(OrderState.fromPostOrderResponse(it))
+            onPostOrder(it)
         }
     }
 
     override fun getOrderStatus(orderId: OrderId): Result<OrderState> {
-        if (!myOpenOrders.containsKey(orderId))
-            return Result.failure(NoOpenOrderWithSuchIdError())
-        return actualAccount.getOrderStatus(orderId).onSuccess(::onSuccessOrder)
+        return actualAccount.getOrderStatus(orderId).onSuccess {
+            if (it.status == OrderStatus.FILL)
+                onSuccessOrder(it)
+        }
     }
 
     override fun getOpenOrders(): Result<List<OrderState>> =
         actualAccount.getOpenOrders().map { orderStates ->
-            orderStates.filterOnlyExecuted().forEach(::onSuccessOrder)
+            syncStateWith(orderStates.map { it.orderId }.toSet())
             orderStates.filter { it.orderId in myOpenOrders }
         }
 
@@ -76,11 +77,16 @@ class TinkoffVirtualAccount(
 
     // internal
 
-    private val myOpenOrders: MutableMap<OrderId, PostOrderResponse> =
-        mutableMapOf() // TODO: to OrderInfo
+    private val myOpenOrders: MutableMap<OrderId, OrderState> =
+        mutableMapOf()
 
-    private fun List<OrderState>.filterOnlyExecuted(): List<OrderState> =
-        this.filter { it.status == OrderStatus.FILL }
+    private fun syncStateWith(currentOpenOrdersIds: Set<OrderId>) {
+        val executedOrderIds = myOpenOrders.keys.toSet() - currentOpenOrdersIds.toSet()
+        executedOrderIds.forEach { executedOrderId ->
+            val executedOrderState = myOpenOrders[executedOrderId]!!
+            onSuccessOrder(executedOrderState)
+        }
+    }
 
     private fun computeTotalRequestedQuotation(figi: Figi, quantity: UInt, price: Price): Quotation {
         val requestedQuotation = when (price) {
@@ -90,7 +96,7 @@ class TinkoffVirtualAccount(
         return requestedQuotation * quantity
     }
 
-    private fun computeExtraRequestedQuotation(oldOrder: PostOrderResponse, quantity: UInt, price: Price): Quotation {
+    private fun computeExtraRequestedQuotation(oldOrder: OrderState, quantity: UInt, price: Price): Quotation {
         val oldRequestedQuotation = oldOrder.totalCost.quotation
         val newRequestedQuotation = computeTotalRequestedQuotation(oldOrder.figi, quantity, price)
         return (oldRequestedQuotation - newRequestedQuotation) ?: Quotation.zero()
@@ -114,7 +120,7 @@ class TinkoffVirtualAccount(
         return Result.success(Unit)
     }
 
-    private fun validateReplaceBuyOrder(orderToReplace: PostOrderResponse, quantity: UInt, price: Price): Result<Unit> {
+    private fun validateReplaceBuyOrder(orderToReplace: OrderState, quantity: UInt, price: Price): Result<Unit> {
         val extraRequestedCurrency = Currency(
             isoCode = "rub", // TODO
             computeExtraRequestedQuotation(orderToReplace, quantity, price)
@@ -124,7 +130,7 @@ class TinkoffVirtualAccount(
         return Result.success(Unit)
     }
 
-    private fun validateReplaceSellOrder(orderToReplace: PostOrderResponse, quantity: UInt): Result<Unit> {
+    private fun validateReplaceSellOrder(orderToReplace: OrderState, quantity: UInt): Result<Unit> {
         if (quantity > orderToReplace.lotsRequested) {
             val extraRequestedQuantity = orderToReplace.lotsRequested - quantity
             if (!availableSecurities.hasEnough(Security(orderToReplace.figi, extraRequestedQuantity)))
@@ -136,43 +142,43 @@ class TinkoffVirtualAccount(
     // OrderState.BUY callbacks
 
     private fun onPostBuyOrder(postOrderResponse: PostOrderResponse) {
-        myOpenOrders[postOrderResponse.orderId] = postOrderResponse
+        myOpenOrders[postOrderResponse.orderId] = OrderState.fromPostOrderResponse(postOrderResponse)
         availableCurrencies.decrease(postOrderResponse.totalCost)
     }
 
     private fun onSuccessBuyOrder(orderState: OrderState) {
-        myOpenOrders.remove(orderState.orderId)
+        myOpenOrders.remove(orderState.orderId) ?: return
         val purchasedSecurity = Security(orderState.figi, orderState.lotsExecuted)
         availableSecurities.increase(purchasedSecurity)
     }
 
-    private fun onCancelBuyOrder(postOrderResponse: PostOrderResponse) {
-        myOpenOrders.remove(postOrderResponse.orderId)
-        availableCurrencies.decrease(postOrderResponse.totalCost)
+    private fun onCancelBuyOrder(orderState: OrderState) {
+        myOpenOrders.remove(orderState.orderId) ?: return
+        availableCurrencies.decrease(orderState.totalCost)
     }
 
     // OrderState.SELL callbacks
 
     private fun onPostSellOrder(postOrderResponse: PostOrderResponse) {
-        myOpenOrders[postOrderResponse.orderId] = postOrderResponse
+        myOpenOrders[postOrderResponse.orderId] = OrderState.fromPostOrderResponse(postOrderResponse)
         val requestedSecurity = Security(postOrderResponse.figi, postOrderResponse.lotsRequested)
         availableSecurities.decrease(requestedSecurity)
     }
 
     private fun onSuccessSellOrder(orderState: OrderState) {
-        myOpenOrders.remove(orderState.orderId)
+        myOpenOrders.remove(orderState.orderId) ?: return
         availableCurrencies.increase(orderState.totalCost)
     }
 
-    private fun onCancelSellOrder(postOrderResponse: PostOrderResponse) {
-        myOpenOrders.remove(postOrderResponse.orderId)
-        val requestedSecurity = Security(postOrderResponse.figi, postOrderResponse.lotsRequested)
+    private fun onCancelSellOrder(orderState: OrderState) {
+        myOpenOrders.remove(orderState.orderId) ?: return
+        val requestedSecurity = Security(orderState.figi, orderState.lotsRequested)
         availableSecurities.increase(requestedSecurity)
     }
 
     // Direction managers
 
-    private fun validateReplaceOrder(orderToReplace: PostOrderResponse, quantity: UInt, price: Price): Result<Unit> =
+    private fun validateReplaceOrder(orderToReplace: OrderState, quantity: UInt, price: Price): Result<Unit> =
         when (orderToReplace.direction) {
             OrderDirection.BUY -> validateReplaceBuyOrder(orderToReplace, quantity, price)
             OrderDirection.SELL -> validateReplaceSellOrder(orderToReplace, quantity)
@@ -192,10 +198,10 @@ class TinkoffVirtualAccount(
         }
     }
 
-    private fun onCancelOrder(postOrderResponse: PostOrderResponse) {
-        when (postOrderResponse.direction) {
-            OrderDirection.BUY -> onCancelBuyOrder(postOrderResponse)
-            OrderDirection.SELL -> onCancelSellOrder(postOrderResponse)
+    private fun onCancelOrder(orderState: OrderState) {
+        when (orderState.direction) {
+            OrderDirection.BUY -> onCancelBuyOrder(orderState)
+            OrderDirection.SELL -> onCancelSellOrder(orderState)
         }
     }
 }

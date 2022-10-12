@@ -13,6 +13,7 @@ data class OrderState(
     val lotsExecuted: UInt,
 ) {
     companion object {
+
         fun fromTinkoff(tinkoffOrderState: TinkoffOrderState): OrderState =
             OrderState(
                 tinkoffOrderState.orderId,
@@ -22,6 +23,17 @@ data class OrderState(
                 orderDirectionFromTinkoff(tinkoffOrderState.direction),
                 tinkoffOrderState.lotsRequested.toUInt(),
                 tinkoffOrderState.lotsExecuted.toUInt(),
+            )
+
+        fun fromPostOrderResponse(postOrderResponse: PostOrderResponse): OrderState =
+            OrderState(
+                postOrderResponse.orderId,
+                postOrderResponse.figi,
+                postOrderResponse.status,
+                postOrderResponse.totalCost,
+                postOrderResponse.direction,
+                postOrderResponse.lotsRequested,
+                postOrderResponse.lotsExecuted,
             )
     }
 }
