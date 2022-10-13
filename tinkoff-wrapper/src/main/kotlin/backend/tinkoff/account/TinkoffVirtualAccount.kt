@@ -123,6 +123,12 @@ class TinkoffVirtualAccount(
         return Result.success(Unit)
     }
 
+    private fun validateReplaceOrder(orderToReplace: OrderState, quantity: UInt, price: Price): Result<Unit> =
+        when (orderToReplace.direction) {
+            OrderDirection.BUY -> validateReplaceBuyOrder(orderToReplace, quantity, price)
+            OrderDirection.SELL -> validateReplaceSellOrder(orderToReplace, quantity)
+        }
+
     private fun validateReplaceBuyOrder(orderToReplace: OrderState, quantity: UInt, price: Price): Result<Unit> {
         val extraRequestedCurrency = Currency(
             isoCode = "rub", // TODO
@@ -181,13 +187,7 @@ class TinkoffVirtualAccount(
         availableSecurities.forceIncrease(requestedSecurity)
     }
 
-    // Direction managers
-
-    private fun validateReplaceOrder(orderToReplace: OrderState, quantity: UInt, price: Price): Result<Unit> =
-        when (orderToReplace.direction) {
-            OrderDirection.BUY -> validateReplaceBuyOrder(orderToReplace, quantity, price)
-            OrderDirection.SELL -> validateReplaceSellOrder(orderToReplace, quantity)
-        }
+    // Callbacks managers
 
     private fun onPostOrder(postOrderResponse: PostOrderResponse) {
         when (postOrderResponse.direction) {
