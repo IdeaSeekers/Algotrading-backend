@@ -1,5 +1,5 @@
 package backend.tinkoff.error
 
-data class CannotOpenVirtualAccountError(
+class CannotOpenVirtualAccountError(
     override val message: String = "Cannot open a new virtual account"
 ) : Exception()

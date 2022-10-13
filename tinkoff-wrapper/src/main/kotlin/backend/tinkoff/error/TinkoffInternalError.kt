@@ -1,5 +1,5 @@
 package backend.tinkoff.error
 
-data class TinkoffInternalError(
+class TinkoffInternalError(
     override val message: String = "Unexpected response was received from Tinkoff"
 ) : Exception()
