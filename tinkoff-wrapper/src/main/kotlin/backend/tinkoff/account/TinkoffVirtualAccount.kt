@@ -128,16 +128,18 @@ class TinkoffVirtualAccount(
             isoCode = "rub", // TODO
             computeExtraRequestedQuotation(orderToReplace, quantity, price)
         )
-        if (!availableCurrencies.hasEnough(extraRequestedCurrency))
+        if (!availableCurrencies.hasEnough(extraRequestedCurrency)) {
             return Result.failure(NotEnoughVirtualMoneyError())
+        }
         return Result.success(Unit)
     }
 
     private fun validateReplaceSellOrder(orderToReplace: OrderState, quantity: UInt): Result<Unit> {
         if (quantity > orderToReplace.lotsRequested) {
             val extraRequestedQuantity = orderToReplace.lotsRequested - quantity
-            if (!availableSecurities.hasEnough(Security(orderToReplace.figi, extraRequestedQuantity)))
+            if (!availableSecurities.hasEnough(Security(orderToReplace.figi, extraRequestedQuantity))) {
                 return Result.failure(NotEnoughVirtualSecurityError())
+            }
         }
         return Result.success(Unit)
     }
@@ -202,8 +204,9 @@ class TinkoffVirtualAccount(
     }
 
     private fun onSuccessOrderIfExecuted(orderState: OrderState) {
-        if (orderState.status == OrderStatus.FILL)
+        if (orderState.status == OrderStatus.FILL) {
             onSuccessOrder(orderState)
+        }
     }
 
     private fun onCancelOrder(orderState: OrderState) {

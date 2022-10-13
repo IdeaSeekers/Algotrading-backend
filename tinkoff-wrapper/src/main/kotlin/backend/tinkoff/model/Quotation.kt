@@ -39,17 +39,14 @@ data class Quotation(
         return Quotation(newUnits, newNano)
     }
 
-    operator fun compareTo(other: Quotation): Int {
-        if (units < other.units)
-            return -1
-        if (units > other.units)
-            return +1
-        if (nano < other.nano)
-            return -1
-        if (nano > other.nano)
-            return +1
-        return 0
-    }
+    operator fun compareTo(other: Quotation): Int =
+        when {
+            units < other.units -> -1
+            units > other.units -> +1
+            nano < other.nano -> -1
+            nano > other.nano -> +1
+            else -> 0
+        }
 
     companion object {
 

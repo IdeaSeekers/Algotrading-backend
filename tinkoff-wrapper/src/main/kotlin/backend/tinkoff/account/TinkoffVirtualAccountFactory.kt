@@ -46,8 +46,9 @@ class TinkoffVirtualAccountFactory(
                 is Security -> availableSecurities.hasEnough(position)
             }
         }
-        if (!enoughAvailablePositions)
+        if (!enoughAvailablePositions) {
             return Result.failure(CannotOpenVirtualAccountError("Cannot provide all requested positions"))
+        }
 
         requestPositions.forEach { position ->
             when (position) {

@@ -10,7 +10,8 @@ internal fun <T> wrapTinkoffRequest(requestToTinkoffApi: () -> T): Result<T> =
 internal fun <T> waitForSuccess(block: () -> Result<T>): T {
     while (true) {
         val result = block()
-        if (result.isSuccess)
+        if (result.isSuccess) {
             return result.getOrThrow()
+        }
     }
 }

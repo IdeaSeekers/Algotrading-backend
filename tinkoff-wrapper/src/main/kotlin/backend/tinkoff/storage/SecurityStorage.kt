@@ -36,13 +36,15 @@ class SecurityStorage(initialSecurities: Map<Figi, Security>) {
         updateWith(by, Security::minus)
 
     fun forceIncrease(by: Security) {
-        if (!increase(by))
+        if (!increase(by)) {
             error("Cannot increase SecurityStorage by security: $by")
+        }
     }
 
     fun forceDecrease(by: Security) {
-        if (!decrease(by))
+        if (!decrease(by)) {
             error("Cannot decrease SecurityStorage by security: $by")
+        }
     }
 
     fun updateWith(security: Security, mapping: (Security, Security) -> Security?): Boolean {

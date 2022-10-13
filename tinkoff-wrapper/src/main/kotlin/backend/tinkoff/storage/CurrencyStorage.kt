@@ -37,13 +37,15 @@ class CurrencyStorage(initialCurrencies: Map<IsoCode, Currency>) {
         updateWith(by, Currency::minus)
 
     fun forceIncrease(by: Currency) {
-        if (!increase(by))
+        if (!increase(by)) {
             error("Cannot increase CurrencyStorage by currency: $by")
+        }
     }
 
     fun forceDecrease(by: Currency) {
-        if (!decrease(by))
+        if (!decrease(by)) {
             error("Cannot decrease CurrencyStorage by currency: $by")
+        }
     }
 
     fun updateWith(currency: Currency, mapping: (Currency, Currency) -> Currency?): Boolean {
