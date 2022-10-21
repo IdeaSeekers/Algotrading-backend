@@ -2,7 +2,6 @@ package backend.statistics
 
 import backend.statistics.model.ActionInfo
 import backend.statistics.model.ReportType
-import backend.statistics.storage.MockStorage
 import backend.statistics.storage.MockStorage.purchasesPerBot
 import backend.statistics.storage.MockStorage.salesPerBot
 
