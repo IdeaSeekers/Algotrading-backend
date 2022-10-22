@@ -4,6 +4,7 @@ import backend.tinkoff.model.Figi
 import backend.tinkoff.model.LimitedPrice
 import backend.tinkoff.model.OrderId
 import backend.tinkoff.model.Price
+import backend.tinkoff.model.Quotation
 import backend.tinkoff.response.CancelOrderResponse
 import backend.tinkoff.response.OrderState
 import backend.tinkoff.response.PositionsResponse
@@ -24,4 +25,5 @@ interface TinkoffAccount {
     fun getOpenOrders(): Result<List<OrderState>>
 
     fun getPositions(): Result<PositionsResponse>
+    fun getLastPrice(figi: String): Result<Quotation>
 }
