@@ -1,0 +1,79 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+
+
+package BotService {
+    interface BotService {
+        + activeBots(): Uid[0..*]
+        + getBot(uid: Uid): Bot
+        + startBot(strategyUid: Uid, parameters: Parameters): Uid
+        + stopBot(uid: Uid)
+    }
+
+    interface BotCluster {
+        + activeBots(): Uid[0..*]
+        + getBot(uid: Uid): Bot
+        + deploy(container: StrategyContainer, parameters: Parameters): Bot
+        + stopBot(uid: Uid)
+    }
+
+}
+
+package StrategyService1 {
+    interface StrategyService {
+        + getStrategies(): Uid[0..*]
+        + getStrategy(strategyUid: Uid): Strategy
+    }
+
+    class Strategy {
+        + uid: Uid
+        + name: String
+        + description: Description
+        + parametersDescription: ParametersDescription
+    }
+}
+
+class Bot {
+    + uid: Uid
+    + status: Status
+    + parameters: Parameters
+}
+
+
+package StrategyContainerApi {
+
+    interface StrategyContainerFactory {
+        + createStrategyContainer(strategyUid: Uid): StrategyContainer
+    }
+
+    StrategyContainerFactory "1..*" --o BotService
+
+    interface StrategyContainer {
+        + start(configuration: Configuration)
+        + status(): Status
+        + stop(): Boolean
+        + die(): Boolean
+    }
+    abstract class Configuration {
+        + parameters: Parameters
+        + statisticsServiceRef
+        + tinkoffAccountConfiguration
+    }
+}
+
+StrategyContainerApi <.. StrategyService
+
+BotService o-- "1..*" BotCluster
+
+
+StrategyService ..> Strategy
+
+BotCluster ..> StrategyContainer
+BotCluster ..> Bot
+StrategyContainerFactory ..> StrategyContainer
+
+StrategyContainer ..> Configuration
+BotCluster ..> Configuration
+
+@enduml
