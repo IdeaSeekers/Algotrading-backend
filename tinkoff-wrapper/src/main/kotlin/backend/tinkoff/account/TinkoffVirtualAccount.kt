@@ -11,6 +11,7 @@ import backend.tinkoff.storage.CurrencyStorage
 import backend.tinkoff.storage.SecurityStorage
 
 class TinkoffVirtualAccount(
+    private val botUid: BotUid,
     private val actualAccount: TinkoffActualAccount,
     private val availableCurrencies: CurrencyStorage,
     private val availableSecurities: SecurityStorage,
