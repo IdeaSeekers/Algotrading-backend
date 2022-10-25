@@ -81,7 +81,6 @@ class TinkoffVirtualAccount(
     override fun getLastPrice(figi: Figi): Result<Quotation> =
         actualAccount.getLastPrice(figi)
 
-
     // internal
 
     private val myOpenOrders: MutableMap<OrderId, OrderState> =

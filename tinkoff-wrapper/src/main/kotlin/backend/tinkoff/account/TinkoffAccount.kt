@@ -25,5 +25,6 @@ interface TinkoffAccount {
     fun getOpenOrders(): Result<List<OrderState>>
 
     fun getPositions(): Result<PositionsResponse>
+
     fun getLastPrice(figi: String): Result<Quotation>
 }
