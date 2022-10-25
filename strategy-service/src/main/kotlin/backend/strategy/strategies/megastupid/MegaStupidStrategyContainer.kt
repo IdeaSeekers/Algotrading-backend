@@ -60,13 +60,13 @@ private suspend fun strategy(account: TinkoffAccount) {
         val (currencies, securities) = account.getPositions().getOrThrow()
 
         val balanceRub = currencies.firstOrNull { it.isoCode == "rub" }?.quotation ?: Quotation.zero()
-        val yandex = securities.firstOrNull { it.figi == sberbankFigi }
-        println("Balance: $balanceRub, yandex: $yandex")
+        val sberbank = securities.firstOrNull { it.figi == sberbankFigi }
+        println("Balance: $balanceRub, sberbank: $sberbank")
 
-        val yandexPrice = account.getLastPrice(sberbankFigi).getOrThrow()
+        val sberbankPrice = account.getLastPrice(sberbankFigi).getOrThrow()
 
 
-        val sell = yandex != null && yandexPrice > lastBuyPrice
+        val sell = sberbank != null && sberbank.balance > 0u && sberbankPrice > lastBuyPrice
 
         if (sell) {
             account.postSellOrder(sberbankFigi, 1u, MarketPrice).getOrThrow()
@@ -74,7 +74,7 @@ private suspend fun strategy(account: TinkoffAccount) {
             continue
         }
 
-        if (balanceRub < yandexPrice) {
+        if (balanceRub < sberbankPrice) {
             break
         }
 

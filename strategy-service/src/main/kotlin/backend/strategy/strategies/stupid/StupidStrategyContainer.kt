@@ -66,7 +66,7 @@ private suspend fun strategy(account: TinkoffAccount) {
         val yandexPrice = account.getLastPrice(yandexFigi).getOrThrow()
 
 
-        val sell = yandex != null && yandexPrice > lastBuyPrice
+        val sell = yandex != null && yandex.balance > 0u && yandexPrice > lastBuyPrice
 
         if (sell) {
             account.postSellOrder(yandexFigi, 1u, MarketPrice).getOrThrow()

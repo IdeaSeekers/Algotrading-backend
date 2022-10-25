@@ -11,6 +11,7 @@ import backend.strategy.StrategyService
 import backend.strategy.StrategyUid
 import backend.strategy.UnsupportedStrategyException
 import backend.tinkoff.account.TinkoffActualAccount
+import backend.tinkoff.account.TinkoffVirtualAccount
 import backend.tinkoff.account.TinkoffVirtualAccountFactory
 import backend.tinkoff.model.Currency
 import backend.tinkoff.model.Quotation
@@ -19,16 +20,17 @@ import java.util.concurrent.atomic.AtomicInteger
 class SimpleBotService(
     configure: Configuration.() -> Unit
 ) : BotService {
-    private val virtualAccoutnFactory: TinkoffVirtualAccountFactory
+    private val virtualAccountFactory: TinkoffVirtualAccountFactory
     private val botClusters: Map<StrategyUid, BotCluster>
     private val strategyService: StrategyService
     private val bot2Cluster: MutableMap<BotUid, BotCluster> = mutableMapOf()
+    private val bot2Account: MutableMap<BotUid, TinkoffVirtualAccount> = mutableMapOf()
 
 
     init {
         val configuration = InternalConfiguration().apply(configure)
 
-        virtualAccoutnFactory = TinkoffVirtualAccountFactory(configuration.tinkoffAccount)
+        virtualAccountFactory = TinkoffVirtualAccountFactory(configuration.tinkoffAccount)
         strategyService = configuration.strategyService
         botClusters = configuration.botClusters
     }
@@ -46,7 +48,7 @@ class SimpleBotService(
 
         val container = factory.createStrategyContainer()
 
-        val virtualAccount = virtualAccoutnFactory.openVirtualAccount(
+        val virtualAccount = virtualAccountFactory.openVirtualAccount(
             listOf(Currency("rub", Quotation(1000u, 0u)))
         ).getOrElse { return Result.failure(it) }
 
@@ -54,6 +56,7 @@ class SimpleBotService(
 
         result.onSuccess {
             bot2Cluster[it] = cluster
+            bot2Account[it] = virtualAccount
         }
 
         return result
@@ -63,7 +66,9 @@ class SimpleBotService(
         val cluster = bot2Cluster[uid] ?: return false
         val res = cluster.stopBot(uid)
         if (res) {
-            bot2Cluster.clear()
+            bot2Cluster.remove(uid)
+            virtualAccountFactory.closeVirtualAccount(bot2Account.getValue(uid))
+            bot2Account.remove(uid) // TODO: refactor
         }
         return res
     }
@@ -82,6 +87,7 @@ class SimpleBotService(
         override val synchronizer: AtomicInteger = AtomicInteger()
 
         lateinit var tinkoffAccount: TinkoffActualAccount
+        var autoClose: Boolean = false
         lateinit var strategyService: StrategyService
         val botClusters: MutableMap<StrategyUid, BotCluster> = mutableMapOf()
 
@@ -96,6 +102,5 @@ class SimpleBotService(
         override fun addCluster(id: StrategyUid, cluster: BotCluster) {
             botClusters[id] = cluster
         }
-
     }
 }
