@@ -70,6 +70,9 @@ class TinkoffVirtualAccount(
             orderStates.filter { it.orderId in myOpenOrders }
         }
 
+    fun getExecutedOrders(): Result<MutableMap<OrderId, OrderState>> =
+        Result.success(myExecutedOrders)
+
     override fun getPositions(): Result<PositionsResponse> {
         getOpenOrders() // to sync
         val virtualPositionsResponse = PositionsResponse(
@@ -85,6 +88,9 @@ class TinkoffVirtualAccount(
     // internal
 
     private val myOpenOrders: MutableMap<OrderId, OrderState> =
+        mutableMapOf()
+
+    private val myExecutedOrders: MutableMap<OrderId, OrderState> =
         mutableMapOf()
 
     private fun syncStateWith(currentOpenOrdersIds: Set<OrderId>) {
@@ -165,6 +171,7 @@ class TinkoffVirtualAccount(
         myOpenOrders.remove(orderState.orderId) ?: return
         val purchasedSecurity = Security(orderState.figi, orderState.lotsExecuted)
         availableSecurities.forceIncrease(purchasedSecurity)
+        myExecutedOrders[orderState.orderId] = orderState
     }
 
     private fun onCancelBuyOrder(orderState: OrderState) {
@@ -183,6 +190,7 @@ class TinkoffVirtualAccount(
     private fun onSuccessSellOrder(orderState: OrderState) {
         myOpenOrders.remove(orderState.orderId) ?: return
         availableCurrencies.forceIncrease(orderState.totalCost)
+        myExecutedOrders[orderState.orderId] = orderState
     }
 
     private fun onCancelSellOrder(orderState: OrderState) {
