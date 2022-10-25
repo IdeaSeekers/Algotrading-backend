@@ -4,7 +4,7 @@ import backend.statistics.model.ActionInfo
 import backend.statistics.model.ReportType
 import backend.statistics.storage.MockStorage
 
-class StatisticsAgregator {
+class StatisticsAggregator {
 
     fun getActionsByBotId(botId: Int): MutableList<ActionInfo> {
         val botSales = getActionsByBotId(ReportType.SELL, botId)
@@ -19,8 +19,8 @@ class StatisticsAgregator {
 
     fun getActionsByBotId(report: ReportType, botId: Int): MutableList<ActionInfo> {
         return when(report) {
-            ReportType.BUY -> MockStorage.salesPerBot.getOrDefault(botId, mutableListOf())
-            ReportType.SELL -> MockStorage.purchasesPerBot.getOrDefault(botId, mutableListOf())
+            ReportType.BUY -> MockStorage.purchasesPerBot.getOrDefault(botId, mutableListOf())
+            ReportType.SELL -> MockStorage.salesPerBot.getOrDefault(botId, mutableListOf())
         }
     }
 }
