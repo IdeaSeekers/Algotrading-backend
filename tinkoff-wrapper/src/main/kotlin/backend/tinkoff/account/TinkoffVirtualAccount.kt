@@ -11,6 +11,7 @@ import backend.tinkoff.storage.CurrencyStorage
 import backend.tinkoff.storage.SecurityStorage
 
 class TinkoffVirtualAccount(
+    private val botUid: BotUid,
     private val actualAccount: TinkoffActualAccount,
     private val availableCurrencies: CurrencyStorage,
     private val availableSecurities: SecurityStorage,
@@ -80,7 +81,6 @@ class TinkoffVirtualAccount(
 
     override fun getLastPrice(figi: Figi): Result<Quotation> =
         actualAccount.getLastPrice(figi)
-
 
     // internal
 

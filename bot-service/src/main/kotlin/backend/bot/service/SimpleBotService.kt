@@ -49,6 +49,7 @@ class SimpleBotService(
         val container = factory.createStrategyContainer()
 
         val virtualAccount = virtualAccountFactory.openVirtualAccount(
+            1,
             listOf(Currency("rub", Quotation(1000u, 0u)))
         ).getOrElse { return Result.failure(it) }
 

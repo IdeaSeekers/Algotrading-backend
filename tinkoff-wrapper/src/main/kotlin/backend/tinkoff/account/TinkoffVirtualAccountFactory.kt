@@ -11,11 +11,12 @@ class TinkoffVirtualAccountFactory(
     private val actualAccount: TinkoffActualAccount,
 ) {
 
-    fun openVirtualAccount(withAvailablePositions: List<Position>): Result<TinkoffVirtualAccount> =
+    fun openVirtualAccount(botUid: BotUid, withAvailablePositions: List<Position>): Result<TinkoffVirtualAccount> =
         tryUpdateAvailablePositions(withAvailablePositions).map {
             val initialCurrencies = withAvailablePositions.filterIsInstance<Currency>()
             val initialSecurities = withAvailablePositions.filterIsInstance<Security>()
             val virtualAccount = TinkoffVirtualAccount(
+                botUid,
                 actualAccount,
                 CurrencyStorage.fromList(initialCurrencies),
                 SecurityStorage.fromList(initialSecurities),
