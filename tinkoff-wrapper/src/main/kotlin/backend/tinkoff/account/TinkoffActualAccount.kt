@@ -77,7 +77,7 @@ class TinkoffActualAccount(
         }
     }
 
-    fun getLastPrice(figi: Figi): Result<Quotation> {
+    override fun getLastPrice(figi: Figi): Result<Quotation> {
         val lastPrices = investApi.marketDataService.getLastPrices(listOf(figi)).get()
         if (lastPrices.size != 1) {
             return Result.failure(TinkoffInternalError())
