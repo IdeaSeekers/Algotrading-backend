@@ -9,3 +9,5 @@ typealias IsoCode = String
 typealias UserToken = String
 
 typealias AccountId = String
+
+typealias BotUid = Int

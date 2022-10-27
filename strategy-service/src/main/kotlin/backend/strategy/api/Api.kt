@@ -1,2 +1,0 @@
-package backend.strategy.api
-
