@@ -27,13 +27,21 @@ class BotsDatabase {
 
     fun create_int_parameter(param_name: String, param_description: String, default_param_value: Int): Int? {
         return transaction {
-            exec("select create_int_parameter('$param_name', '$param_description', $default_param_value);") { it.next(); it.getInt(1) }
+            exec("select create_int_parameter('$param_name', '$param_description', $default_param_value);") {
+                it.next(); it.getInt(
+                1
+            )
+            }
         }
     }
 
     fun create_double_parameter(param_name: String, param_description: String, default_param_value: Double) {
         return transaction {
-            exec("select create_double_parameter('$param_name', '$param_description', $default_param_value);") { it.next(); it.getInt(1) }
+            exec("select create_double_parameter('$param_name', '$param_description', $default_param_value);") {
+                it.next(); it.getInt(
+                1
+            )
+            }
         }
     }
 
@@ -79,17 +87,35 @@ class BotsDatabase {
         }
     }
 
-    fun add_operation(bot_id: Int, op_id: Int, stock_id: Int, stock_count: Int, stock_cost: Double, op_time: Timestamp) {
+    fun add_operation(
+        bot_id: Int,
+        op_id: Int,
+        stock_id: Int,
+        stock_count: Int,
+        stock_cost: Double,
+        op_time: Timestamp
+    ) {
         return transaction {
             exec("select add_operation($bot_id, $op_id, $stock_id, $stock_count, $stock_cost, '$op_time');")
         }
     }
 
     // TODO: Parse table
-    fun get_operations(bot_id: Int) {
-        return transaction {
-            exec("select get_operations($bot_id);")
-        }
+    fun get_operations(bot_id: Int): List<OperationInfo> {
+        val ops = transaction {
+            exec("select * from get_operations($bot_id);") {
+                it.next();
+                var ops = mutableListOf<OperationInfo>()
+                while (!it.isAfterLast) {
+                    ops.add(OperationInfo(it.getInt(1), it.getInt(2), it.getInt(3), it.getDouble(4), it.getTimestamp(5)))
+                    it.next()
+                }
+                ops
+            }
+        } ?: listOf<OperationInfo>()
+
+        return ops
     }
 
+    data class OperationInfo(val opId: Int, val stockId: Int, val count: Int, val price: Double, val opTime: Timestamp)
 }
