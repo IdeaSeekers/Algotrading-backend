@@ -26,7 +26,7 @@ class MegaStupidStrategyContainer : StrategyContainer {
 
     override fun start(configuration: Configuration): Boolean {
         job = scope.launch {
-            strategy(configuration.tinkoffAccount)
+            strategy(configuration)
         }
 
         return true
@@ -52,7 +52,8 @@ class MegaStupidStrategyContainer : StrategyContainer {
 
 }
 
-private suspend fun strategy(account: TinkoffAccount) {
+private suspend fun strategy(configuration: Configuration) {
+    val account = configuration.tinkoffAccount
     val sberbankFigi = "BBG004730N88"
     var lastBuyPrice = Quotation.zero()
 
@@ -61,7 +62,11 @@ private suspend fun strategy(account: TinkoffAccount) {
 
         val balanceRub = currencies.firstOrNull { it.isoCode == "rub" }?.quotation ?: Quotation.zero()
         val sberbank = securities.firstOrNull { it.figi == sberbankFigi }
-        println("Balance: $balanceRub, sberbank: $sberbank")
+        fun f(q: Quotation) = "%8.2f".format(q.units.toDouble() + q.nano.toDouble() / 1e9)
+        if (sberbank != null)
+            println("[${configuration.parameters.parameters}]    Balance: ${f(balanceRub)}₽    Sberbank shares: ${sberbank.balance}")
+        else
+            println("[${configuration.parameters.parameters}]    Balance: ${f(balanceRub)}₽")
 
         val sberbankPrice = account.getLastPrice(sberbankFigi).getOrThrow()
 

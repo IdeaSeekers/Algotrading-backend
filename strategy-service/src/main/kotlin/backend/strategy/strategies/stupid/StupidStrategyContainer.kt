@@ -26,7 +26,7 @@ class StupidStrategyContainer : StrategyContainer {
 
     override fun start(configuration: Configuration): Boolean {
         job = scope.launch {
-            strategy(configuration.tinkoffAccount)
+            strategy(configuration)
         }
 
         return true
@@ -52,7 +52,8 @@ class StupidStrategyContainer : StrategyContainer {
 
 }
 
-private suspend fun strategy(account: TinkoffAccount) {
+private suspend fun strategy(configuration: Configuration) {
+    val account = configuration.tinkoffAccount
     val yandexFigi = "BBG006L8G4H1"
     var lastBuyPrice = Quotation.zero()
 
@@ -61,7 +62,11 @@ private suspend fun strategy(account: TinkoffAccount) {
 
         val balanceRub = currencies.firstOrNull { it.isoCode == "rub" }?.quotation ?: Quotation.zero()
         val yandex = securities.firstOrNull { it.figi == yandexFigi }
-        println("Balance: $balanceRub, yandex: $yandex")
+        fun f(q: Quotation) = "%8.2f".format(q.units.toDouble() + q.nano.toDouble() / 1e9)
+        if (yandex != null)
+            println("[${configuration.parameters.parameters}]    Balance: ${f(balanceRub)}₽    Yandex shares: ${yandex.balance}")
+        else
+            println("[${configuration.parameters.parameters}]    Balance: ${f(balanceRub)}₽")
 
         val yandexPrice = account.getLastPrice(yandexFigi).getOrThrow()
 

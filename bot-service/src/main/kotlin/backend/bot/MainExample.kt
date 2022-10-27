@@ -48,6 +48,6 @@ fun main() {
         addCluster(2, cluster) // both strategies start on the same cluster
     }
 
-    service.startBot(1, "TestBot1", Parameters(""))
-    service.startBot(2, "TestBot2", Parameters(""))
+    service.startBot(1, "TestBot1", Parameters("TestBot1", 10000u))
+    service.startBot(2, "TestBot2", Parameters("TestBot2", 5000u))
 }

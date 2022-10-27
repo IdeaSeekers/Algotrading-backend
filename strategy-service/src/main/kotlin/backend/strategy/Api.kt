@@ -14,7 +14,8 @@ data class ParametersDescription(
 )
 
 data class Parameters(
-    val parameters: String
+    val parameters: String,
+     val rubles: UInt
 )
 
 interface StrategyService {

@@ -53,7 +53,7 @@ class SimpleBotService(
 
         val virtualAccount = virtualAccountFactory.openVirtualAccount(
             uid,
-            listOf(Currency("rub", Quotation(1000u, 0u)))
+            listOf(Currency("rub", Quotation(parameters.rubles, 0u)))
         ).getOrElse { return Result.failure(it) }
 
         val result = cluster.deploy(container, uid, name, parameters, virtualAccount)
