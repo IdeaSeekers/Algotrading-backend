@@ -9,7 +9,7 @@ object StatisticsReporter {
 
     @Synchronized
     fun report(reportType: ReportType, botId: Int, actionInfo: ActionInfo) {
-        val statisticsStorage = when(reportType) {
+        val statisticsStorage = when (reportType) {
             ReportType.BUY -> purchasesPerBot
             ReportType.SELL -> salesPerBot
         }

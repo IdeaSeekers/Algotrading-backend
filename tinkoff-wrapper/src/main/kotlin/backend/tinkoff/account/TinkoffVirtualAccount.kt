@@ -27,7 +27,6 @@ class TinkoffVirtualAccount(
         return actualAccount.postBuyOrder(figi, quantity, price).onSuccess {
             onPostBuyOrder(it)
             onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
-            StatisticsReporter.report(ReportType.BUY, botUid, ActionInfo(figi, quantity, price.toString()))
         }
     }
 
@@ -38,7 +37,6 @@ class TinkoffVirtualAccount(
         return actualAccount.postSellOrder(figi, quantity, price).onSuccess {
             onPostSellOrder(it)
             onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
-            StatisticsReporter.report(ReportType.SELL, botUid, ActionInfo(figi, quantity, price.toString()))
         }
     }
 
@@ -177,6 +175,13 @@ class TinkoffVirtualAccount(
         val purchasedSecurity = Security(orderState.figi, orderState.lotsExecuted)
         availableSecurities.forceIncrease(purchasedSecurity)
         myExecutedOrders[orderState.orderId] = orderState
+
+        val actionInfo = ActionInfo(
+            orderState.figi,
+            orderState.lotsExecuted,
+            orderState.totalCost.toStatisticsPrice()
+        )
+        StatisticsReporter.report(ReportType.BUY, botUid, actionInfo)
     }
 
     private fun onCancelBuyOrder(orderState: OrderState) {
@@ -196,6 +201,13 @@ class TinkoffVirtualAccount(
         myOpenOrders.remove(orderState.orderId) ?: return
         availableCurrencies.forceIncrease(orderState.totalCost)
         myExecutedOrders[orderState.orderId] = orderState
+
+        val actionInfo = ActionInfo(
+            orderState.figi,
+            orderState.lotsExecuted,
+            orderState.totalCost.toStatisticsPrice()
+        )
+        StatisticsReporter.report(ReportType.SELL, botUid, actionInfo)
     }
 
     private fun onCancelSellOrder(orderState: OrderState) {

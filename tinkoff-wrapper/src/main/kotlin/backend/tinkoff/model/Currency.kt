@@ -14,6 +14,13 @@ data class Currency(
             .setNano(quotation.nano.toInt())
             .build()
 
+    fun toStatisticsPrice(): backend.statistics.model.Price =
+        backend.statistics.model.Price(
+            isoCode,
+            quotation.units,
+            quotation.nano
+        )
+
     operator fun plus(other: Currency): Currency? {
         if (isoCode != other.isoCode)
             return null
