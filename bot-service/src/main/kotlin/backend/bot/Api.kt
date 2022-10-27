@@ -27,6 +27,6 @@ interface BotService {
 interface BotCluster {
     fun activeBots(): List<BotUid>
     fun getBot(uid: BotUid): Result<Bot>
-    fun deploy(container: StrategyContainer, name: BotName, parameters: Parameters, tinkoffAccount: TinkoffAccount): Result<BotUid>
+    fun deploy(container: StrategyContainer, uid: BotUid, name: BotName, parameters: Parameters, tinkoffAccount: TinkoffAccount): Result<Unit>
     fun stopBot(uid: BotUid): Boolean
 }

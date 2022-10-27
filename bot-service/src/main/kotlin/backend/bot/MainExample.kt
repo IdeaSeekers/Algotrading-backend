@@ -43,7 +43,7 @@ fun main() {
     val service = SimpleBotService {
         withStrategyService(strategyService)
         withAccount(tinkoffAccount)
-        val cluster = SimpleCluster { this.withBotNumberer(synchronizer) } // TODO: refactor
+        val cluster = SimpleCluster()
         addCluster(1, cluster)
         addCluster(2, cluster) // both strategies start on the same cluster
     }
