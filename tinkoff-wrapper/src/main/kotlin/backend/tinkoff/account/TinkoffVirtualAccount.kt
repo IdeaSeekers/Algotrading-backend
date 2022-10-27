@@ -1,5 +1,8 @@
 package backend.tinkoff.account
 
+import backend.statistics.StatisticsReporter
+import backend.statistics.model.ActionInfo
+import backend.statistics.model.ReportType
 import backend.tinkoff.error.*
 import backend.tinkoff.error.waitForSuccess
 import backend.tinkoff.model.*
@@ -24,6 +27,7 @@ class TinkoffVirtualAccount(
         return actualAccount.postBuyOrder(figi, quantity, price).onSuccess {
             onPostBuyOrder(it)
             onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
+            StatisticsReporter.report(ReportType.BUY, botUid, ActionInfo(figi, quantity, price.toString()))
         }
     }
 
@@ -34,6 +38,7 @@ class TinkoffVirtualAccount(
         return actualAccount.postSellOrder(figi, quantity, price).onSuccess {
             onPostSellOrder(it)
             onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
+            StatisticsReporter.report(ReportType.SELL, botUid, ActionInfo(figi, quantity, price.toString()))
         }
     }
 
