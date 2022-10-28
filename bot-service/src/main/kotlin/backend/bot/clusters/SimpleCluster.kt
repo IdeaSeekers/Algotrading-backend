@@ -34,7 +34,8 @@ class SimpleCluster : BotCluster {
                 uid,
                 name,
                 parameters,
-                Status.RUNNING
+                Status.RUNNING,
+                tinkoffAccount
             )
 
             activeBots[uid] = bot

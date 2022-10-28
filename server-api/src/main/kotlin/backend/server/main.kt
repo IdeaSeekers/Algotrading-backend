@@ -9,6 +9,9 @@ import backend.strategy.service.SimpleStrategyService
 import backend.strategy.strategies.stupid.StupidStrategyContainerFactory
 import backend.tinkoff.account.TinkoffActualAccount
 import backend.tinkoff.account.TinkoffSandboxService
+import backend.tinkoff.model.Currency
+import backend.tinkoff.model.Quotation
+import backend.tinkoff.model.Security
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -68,7 +71,7 @@ fun mainSeregi(product: Product) {
 data class Product(val name: String, val rubles: Int)
 
 @Serializable
-data class BotInfo(val name: String, val inputAmount: Int)
+data class BotInfo(val name: String, val inputAmount: Int, val currentBalance: String)
 
 fun Application.productRoutes() {
     routing {
@@ -82,9 +85,17 @@ fun Application.productRoutes() {
                 .activeBots()
                 .mapNotNull {
                     val bot = service.getBot(it).getOrNull() ?: return@mapNotNull null
+
+                    fun e(q: Quotation) = "%.2f".format(q.units.toDouble() + q.nano.toDouble() / 1e9)
+                    val secs = bot.tinkoffAccount.getPositions().getOrNull()?.securities
+                    val lastSecs = secs?.mapNotNull { a -> bot.tinkoffAccount.getLastPrice(a.figi).getOrNull() }
+                    val cura = bot.tinkoffAccount.getPositions().getOrNull()?.currencies?.firstOrNull()?.quotation ?: Quotation.zero()
+                    val bal = cura + (if (secs?.isNotEmpty() == true) lastSecs?.reduce(Quotation::plus) ?: Quotation.zero() else Quotation.zero())
+
                     BotInfo(
                         bot.name,
-                        bot.parameters.rubles.toInt()
+                        bot.parameters.rubles.toInt(),
+                        e(bal)
                     )
                 }
             call.respond(HttpStatusCode.OK, bots)

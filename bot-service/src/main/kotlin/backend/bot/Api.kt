@@ -15,6 +15,7 @@ data class Bot(
     val name: BotName,
     val parameters: Parameters,
     val status: Status,
+    val tinkoffAccount: TinkoffAccount
 )
 
 interface BotService {
