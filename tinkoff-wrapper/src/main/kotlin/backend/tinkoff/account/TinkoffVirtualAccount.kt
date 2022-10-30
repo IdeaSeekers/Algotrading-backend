@@ -1,9 +1,8 @@
 package backend.tinkoff.account
 
-import backend.statistics.StatisticsReporter
-import backend.statistics.model.ActionInfo
-import backend.statistics.model.ReportType
-import backend.tinkoff.error.*
+import backend.tinkoff.error.NoOpenOrderWithSuchIdError
+import backend.tinkoff.error.NotEnoughVirtualMoneyError
+import backend.tinkoff.error.NotEnoughVirtualSecurityError
 import backend.tinkoff.error.waitForSuccess
 import backend.tinkoff.model.*
 import backend.tinkoff.response.CancelOrderResponse
@@ -27,7 +26,6 @@ class TinkoffVirtualAccount(
         return actualAccount.postBuyOrder(figi, quantity, price).onSuccess {
             onPostBuyOrder(it)
             onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
-            StatisticsReporter.report(ReportType.BUY, botUid, ActionInfo(figi, quantity, price.toString()))
         }
     }
 
@@ -38,7 +36,6 @@ class TinkoffVirtualAccount(
         return actualAccount.postSellOrder(figi, quantity, price).onSuccess {
             onPostSellOrder(it)
             onSuccessOrderIfExecuted(OrderState.fromPostOrderResponse(it))
-            StatisticsReporter.report(ReportType.SELL, botUid, ActionInfo(figi, quantity, price.toString()))
         }
     }
 
@@ -177,6 +174,7 @@ class TinkoffVirtualAccount(
         val purchasedSecurity = Security(orderState.figi, orderState.lotsExecuted)
         availableSecurities.forceIncrease(purchasedSecurity)
         myExecutedOrders[orderState.orderId] = orderState
+        // to Statistics: BUY(botUid: Int, figi: String, quantity: UInt, price: Double)
     }
 
     private fun onCancelBuyOrder(orderState: OrderState) {
@@ -196,6 +194,7 @@ class TinkoffVirtualAccount(
         myOpenOrders.remove(orderState.orderId) ?: return
         availableCurrencies.forceIncrease(orderState.totalCost)
         myExecutedOrders[orderState.orderId] = orderState
+        // to Statistics: SELL(botUid: Int, figi: String, quantity: UInt, price: Double)
     }
 
     private fun onCancelSellOrder(orderState: OrderState) {
