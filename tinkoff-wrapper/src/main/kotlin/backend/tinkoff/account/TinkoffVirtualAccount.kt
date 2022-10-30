@@ -174,7 +174,7 @@ class TinkoffVirtualAccount(
         val purchasedSecurity = Security(orderState.figi, orderState.lotsExecuted)
         availableSecurities.forceIncrease(purchasedSecurity)
         myExecutedOrders[orderState.orderId] = orderState
-        // to Statistics: BUY(botUid: Int, figi: String, quantity: UInt, price: Double)
+        // to Statistics: BUY(botUid: Int, figi: String, quantity: UInt, price: Double, timestamp: Instant)
     }
 
     private fun onCancelBuyOrder(orderState: OrderState) {
@@ -194,7 +194,7 @@ class TinkoffVirtualAccount(
         myOpenOrders.remove(orderState.orderId) ?: return
         availableCurrencies.forceIncrease(orderState.totalCost)
         myExecutedOrders[orderState.orderId] = orderState
-        // to Statistics: SELL(botUid: Int, figi: String, quantity: UInt, price: Double)
+        // to Statistics: SELL(botUid: Int, figi: String, quantity: UInt, price: Double, timestamp: Instant)
     }
 
     private fun onCancelSellOrder(orderState: OrderState) {
