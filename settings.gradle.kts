@@ -1,5 +1,6 @@
 rootProject.name = "backend"
 
+include("common")
 include("server-api")
 include("db-wrapper")
 include("tinkoff-wrapper")
