@@ -26,6 +26,7 @@ class SimpleBotService(
     private val bot2Cluster: MutableMap<BotUid, BotCluster> = mutableMapOf()
     private val bot2Account: MutableMap<BotUid, TinkoffVirtualAccount> = mutableMapOf()
 
+    private var botNumberer = 0
 
     init {
         val configuration = InternalConfiguration().apply(configure)
@@ -48,19 +49,21 @@ class SimpleBotService(
 
         val container = factory.createStrategyContainer()
 
+        val uid = botNumberer++
+
         val virtualAccount = virtualAccountFactory.openVirtualAccount(
-            1,
+            uid,
             listOf(Currency("rub", Quotation(1000u, 0u)))
         ).getOrElse { return Result.failure(it) }
 
-        val result = cluster.deploy(container, name, parameters, virtualAccount)
+        val result = cluster.deploy(container, uid, name, parameters, virtualAccount)
 
         result.onSuccess {
-            bot2Cluster[it] = cluster
-            bot2Account[it] = virtualAccount
+            bot2Cluster[uid] = cluster
+            bot2Account[uid] = virtualAccount
         }
 
-        return result
+        return result.map { uid }
     }
 
     override fun stopBot(uid: BotUid): Boolean {
@@ -88,7 +91,6 @@ class SimpleBotService(
         override val synchronizer: AtomicInteger = AtomicInteger()
 
         lateinit var tinkoffAccount: TinkoffActualAccount
-        var autoClose: Boolean = false
         lateinit var strategyService: StrategyService
         val botClusters: MutableMap<StrategyUid, BotCluster> = mutableMapOf()
 

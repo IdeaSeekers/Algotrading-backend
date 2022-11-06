@@ -11,19 +11,10 @@ import backend.strategy.Parameters
 import backend.strategy.Status
 import backend.strategy.StrategyContainer
 import backend.tinkoff.account.TinkoffAccount
-import java.util.concurrent.atomic.AtomicInteger
 
-class SimpleCluster(
-    configure: Configuration.() -> Unit
-) : BotCluster {
+class SimpleCluster : BotCluster {
     private val activeBots: MutableMap<BotUid, Bot> = mutableMapOf()
     private val containers: MutableMap<BotUid, StrategyContainer> = mutableMapOf()
-    private val botNumberer: AtomicInteger
-
-    init {
-        val configuration = InternalConfiguration().apply(configure)
-        botNumberer = configuration.botNumberer
-    }
 
     override fun activeBots(): List<BotUid> =
         activeBots.keys.toList()
@@ -31,7 +22,7 @@ class SimpleCluster(
     override fun getBot(uid: BotUid): Result<Bot> =
         activeBots[uid]?.let { Result.success(it) } ?: Result.failure(BotNotFoundException(uid))
 
-    override fun deploy(container: StrategyContainer, name: BotName, parameters: Parameters, tinkoffAccount: TinkoffAccount): Result<BotUid> {
+    override fun deploy(container: StrategyContainer, uid: BotUid, name: BotName, parameters: Parameters, tinkoffAccount: TinkoffAccount): Result<Unit> {
         val configuration = Configuration(
             parameters,
             tinkoffAccount
@@ -39,7 +30,6 @@ class SimpleCluster(
         val res = container.start(configuration)
 
         return if (res) {
-            val uid = botNumberer.incrementAndGet()
             val bot = Bot(
                 uid,
                 name,
@@ -50,7 +40,7 @@ class SimpleCluster(
             activeBots[uid] = bot
             containers[uid] = container
 
-            Result.success(uid)
+            Result.success(Unit)
         } else {
             Result.failure(ContainerStartException())
         }
@@ -64,18 +54,5 @@ class SimpleCluster(
         activeBots.remove(uid)
         containers.remove(uid)
         return true
-    }
-
-    interface Configuration {
-        fun withBotNumberer(numberer: AtomicInteger)
-    }
-
-    // internal
-    private class InternalConfiguration : Configuration {
-        lateinit var botNumberer: AtomicInteger
-
-        override fun withBotNumberer(numberer: AtomicInteger) {
-            botNumberer = numberer
-        }
     }
 }
