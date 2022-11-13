@@ -124,7 +124,7 @@ class BotsDatabase {
         val ops = transaction {
             exec("select * from get_operations($bot_id);") {
                 it.next()
-                var ops = mutableListOf<OperationInfo>()
+                val ops = mutableListOf<OperationInfo>()
                 while (!it.isAfterLast) {
                     ops.add(
                         OperationInfo(
@@ -139,9 +139,25 @@ class BotsDatabase {
                 }
                 ops
             }
-        } ?: listOf<OperationInfo>()
+        } ?: listOf()
 
         return ops
+    }
+
+    fun getBotsByStrategy(strategyId: Int): List<Int> {
+        val bots = transaction {
+            exec("select * from get_bots_by_strategy($strategyId);") {
+                it.next()
+                val bots = mutableListOf<Int>()
+                while (!it.isAfterLast) {
+                    bots.add(it.getInt(1))
+                    it.next()
+                }
+                bots
+            }
+        } ?: listOf()
+
+        return bots
     }
 
     data class OperationInfo(
