@@ -24,10 +24,11 @@ suspend fun simpleStrategy(config: Configuration, balanceHandler: BalanceHandler
         balanceHandler.balance.set(balanceRub.units.toDouble() + balanceRub.nano.toDouble() * 1e-9)
 
 
-        val yandexPrice = account.getLastPrice("BBG006L8G4H1").getOrThrow()
+        val figiPrice = account.getLastPrice(figi).getOrThrow()
+        val figiLot = account.getLotByShare(figi).getOrThrow().toUInt()
+        val figiLotPrice = figiPrice * figiLot
 
-
-        val sell = security != null && security.balance > 0u && yandexPrice > lastBuyPrice
+        val sell = security != null && security.balance > 0u && figiLotPrice > lastBuyPrice
 
         if (sell) {
             account.postSellOrder(figi, 1u, MarketPrice).getOrThrow()
@@ -35,7 +36,7 @@ suspend fun simpleStrategy(config: Configuration, balanceHandler: BalanceHandler
             continue
         }
 
-        if (balanceRub < yandexPrice) {
+        if (balanceRub < figiLotPrice) {
             break
         }
 
