@@ -1,11 +1,7 @@
 package backend.bot.service
 
-import backend.bot.BotNotFoundException
-import backend.bot.api.Bot
-import backend.bot.api.BotCluster
-import backend.bot.api.BotName
-import backend.bot.api.BotService
-import backend.bot.api.BotUid
+import backend.bot.*
+import backend.common.model.BotInfo
 import backend.strategy.Parameters
 import backend.strategy.StrategyService
 import backend.strategy.StrategyUid
@@ -14,8 +10,8 @@ import backend.tinkoff.account.TinkoffActualAccount
 import backend.tinkoff.account.TinkoffVirtualAccount
 import backend.tinkoff.account.TinkoffVirtualAccountFactory
 import backend.tinkoff.model.Currency
+import backend.tinkoff.model.Figi
 import backend.tinkoff.model.Quotation
-import java.util.concurrent.atomic.AtomicInteger
 
 class SimpleBotService(
     configure: Configuration.() -> Unit
@@ -36,27 +32,50 @@ class SimpleBotService(
         botClusters = configuration.botClusters
     }
 
-    override fun activeBots(): List<BotUid> =
-        botClusters.values.flatMap { it.activeBots() }
+    override fun getBotIds(): Result<List<BotUid>> =
+        botClusters.values
+            .map { it.getBotIds() }
+            .run { firstOrNull { it.isFailure } ?: Result.success(flatMap { it.getOrThrow() }) }
 
+    override fun getBot(uid: BotUid): Result<BotInfo> {
+        val cluster = bot2Cluster[uid] ?: return Result.failure(BotNotFoundException(uid))
+        return cluster.getBot(uid)
+    }
 
-    override fun getBot(uid: BotUid): Result<Bot> =
-        bot2Cluster[uid]?.getBot(uid) ?: Result.failure(BotNotFoundException(uid))
+    override fun getRunningBotIds(): Result<List<BotUid>> =
+        botClusters.values
+            .map { it.getRunningBotIds() }
+            .run { firstOrNull { it.isFailure } ?: Result.success(flatMap { it.getOrThrow() }) }
 
-    override fun startBot(strategyUid: StrategyUid, name: BotName, parameters: Parameters): Result<BotUid> {
+    override fun createBot(
+        name: BotName,
+        strategyUid: StrategyUid,
+        initialBalance: Double,
+        securityFigi: Figi,
+        parameters: Parameters
+    ): Result<BotUid> {
         val factory = strategyService.getStrategyContainerFactory(strategyUid).getOrElse { return Result.failure(it) }
         val cluster = botClusters[strategyUid] ?: return Result.failure(UnsupportedStrategyException(strategyUid))
 
-        val container = factory.createStrategyContainer()
+        val container = factory.createStrategyController()
 
         val uid = botNumberer++
 
+        val balance = Quotation(initialBalance.toUInt(), extractNanos(initialBalance))
         val virtualAccount = virtualAccountFactory.openVirtualAccount(
             uid,
-            listOf(Currency("rub", Quotation(1000u, 0u)))
+            listOf(Currency("rub", balance))
         ).getOrElse { return Result.failure(it) }
 
-        val result = cluster.deploy(container, uid, name, parameters, virtualAccount)
+        val result = cluster.deploy(
+            container,
+            virtualAccount,
+            uid,
+            name,
+            strategyUid,
+            securityFigi,
+            parameters,
+        )
 
         result.onSuccess {
             bot2Cluster[uid] = cluster
@@ -66,10 +85,10 @@ class SimpleBotService(
         return result.map { uid }
     }
 
-    override fun stopBot(uid: BotUid): Boolean {
-        val cluster = bot2Cluster[uid] ?: return false
-        val res = cluster.stopBot(uid)
-        if (res) {
+    override fun deleteBot(uid: BotUid): Result<Boolean> {
+        val cluster = bot2Cluster[uid] ?: return Result.failure(BotNotFoundException(uid))
+        val res = cluster.deleteBot(uid)
+        if (res.isSuccess) {
             bot2Cluster.remove(uid)
             virtualAccountFactory.closeVirtualAccount(bot2Account.getValue(uid))
             bot2Account.remove(uid) // TODO: refactor
@@ -77,19 +96,26 @@ class SimpleBotService(
         return res
     }
 
+    override fun pauseBot(uid: BotUid): Result<Boolean> {
+        val cluster = bot2Cluster[uid] ?: return Result.failure(BotNotFoundException(uid))
+        val res = cluster.pauseBot(uid)
+        return res
+    }
+
+    override fun resumeBot(uid: BotUid): Result<Boolean> {
+        val cluster = bot2Cluster[uid] ?: return Result.failure(BotNotFoundException(uid))
+        val res = cluster.pauseBot(uid)
+        return res
+    }
 
     interface Configuration {
         fun withAccount(tinkoffAccount: TinkoffActualAccount)
         fun withStrategyService(strategyService: StrategyService)
         fun addCluster(id: StrategyUid, cluster: BotCluster)
-
-        val synchronizer: AtomicInteger
     }
 
     // internal
     private class InternalConfiguration : Configuration {
-        override val synchronizer: AtomicInteger = AtomicInteger()
-
         lateinit var tinkoffAccount: TinkoffActualAccount
         lateinit var strategyService: StrategyService
         val botClusters: MutableMap<StrategyUid, BotCluster> = mutableMapOf()
@@ -107,3 +133,6 @@ class SimpleBotService(
         }
     }
 }
+
+private fun extractNanos(value: Double): UInt =
+    ((value.toUInt().toDouble() - value) * 1e9).toUInt()
