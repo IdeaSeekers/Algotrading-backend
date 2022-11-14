@@ -1,7 +1,7 @@
 package backend.strategy.service
 
-import backend.strategy.Strategy
-import backend.strategy.StrategyContainerFactory
+import backend.common.model.StrategyInfo
+import backend.strategy.StrategyControllerFactory
 import backend.strategy.StrategyService
 import backend.strategy.StrategyUid
 import backend.strategy.UnsupportedStrategyException
@@ -9,8 +9,8 @@ import backend.strategy.UnsupportedStrategyException
 class SimpleStrategyService(
     configure: Configuration.() -> Unit
 ) : StrategyService {
-    private val strategies: Map<StrategyUid, Strategy>
-    private val supportedFactories: Map<StrategyUid, StrategyContainerFactory>
+    private val strategies: Map<StrategyUid, StrategyInfo>
+    private val supportedFactories: Map<StrategyUid, StrategyControllerFactory>
 
     init {
         val configuration = InternalConfiguration().apply(configure)
@@ -19,27 +19,27 @@ class SimpleStrategyService(
     }
 
 
-    override fun getStrategyContainerFactory(uid: StrategyUid): Result<StrategyContainerFactory> =
+    override fun getStrategyContainerFactory(uid: StrategyUid): Result<StrategyControllerFactory> =
         supportedFactories[uid]?.let { Result.success(it) } ?: Result.failure(UnsupportedStrategyException(uid))
 
-    override fun getStrategies(): List<StrategyUid> =
-        strategies.values.map { it.uid }
+    override fun getStrategyIds(): Result<List<StrategyUid>> =
+            Result.success(strategies.keys.toList())
 
 
-    override fun getStrategy(uid: StrategyUid): Result<Strategy> =
+    override fun getStrategy(uid: StrategyUid): Result<StrategyInfo> =
         strategies[uid]?.let { Result.success(it) } ?: Result.failure(UnsupportedStrategyException(uid))
 
     interface Configuration {
-        fun registerStrategy(strategy: Strategy, factory: StrategyContainerFactory)
+        fun registerStrategy(strategy: StrategyInfo, factory: StrategyControllerFactory)
     }
 
     // internal
     private class InternalConfiguration : Configuration {
-        val strategies: MutableMap<StrategyUid, Strategy> = mutableMapOf()
-        val supportedFactories: MutableMap<StrategyUid, StrategyContainerFactory> = mutableMapOf()
+        val strategies: MutableMap<StrategyUid, StrategyInfo> = mutableMapOf()
+        val supportedFactories: MutableMap<StrategyUid, StrategyControllerFactory> = mutableMapOf()
 
-        override fun registerStrategy(strategy: Strategy, factory: StrategyContainerFactory) {
-            val strategyUid = strategy.uid
+        override fun registerStrategy(strategy: StrategyInfo, factory: StrategyControllerFactory) {
+            val strategyUid = strategies.size
             strategies[strategyUid] = strategy
             supportedFactories[strategyUid] = factory
         }

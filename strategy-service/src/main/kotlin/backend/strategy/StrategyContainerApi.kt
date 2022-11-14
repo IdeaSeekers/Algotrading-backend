@@ -1,23 +1,24 @@
 package backend.strategy
 
+import backend.common.model.BotInfo.Status
 import backend.tinkoff.account.TinkoffAccount
 
-interface StrategyContainerFactory {
-    fun createStrategyContainer(): StrategyContainer
+interface StrategyControllerFactory {
+    fun createStrategyController(): StrategyController
 }
 
-interface StrategyContainer {
-    fun start(configuration: Configuration): Boolean
-    fun status(): Status
-    fun stop(): Boolean
-    fun die(): Boolean
+interface StrategyController {
+    fun start(configuration: Configuration): Result<Boolean>
+    fun status(): Result<Status>
+    fun pause(): Result<Boolean>
+    fun delete(): Result<Boolean>
+
+    fun resume(): Result<Boolean>
+    fun balance(): Result<Double>
 }
 
 data class Configuration(
-    val parameters: Parameters,
     val tinkoffAccount: TinkoffAccount,
+    val parameters: Parameters,
+    val figi: String,
 )
-
-enum class Status {
-    RUNNING, STOPPED, UNKNOWN,
-}

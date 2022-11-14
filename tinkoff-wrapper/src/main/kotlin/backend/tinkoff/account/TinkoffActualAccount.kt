@@ -88,6 +88,15 @@ class TinkoffActualAccount(
         return Result.success(quotation)
     }
 
+    override fun getLotByShare(figi: Figi): Result<Int> {
+        val shareFuture = investApi.instrumentsService
+            .getShareByFigi(figi)
+
+        return wrapTinkoffRequest {
+            shareFuture.get().lot
+        }
+    }
+
     // internal
 
     private val investApi = InvestApi.createSandbox(token)
