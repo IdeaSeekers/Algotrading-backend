@@ -21,10 +21,10 @@ suspend fun simpleStrategy(config: Configuration, balanceHandler: BalanceHandler
         val balanceRub = currencies.firstOrNull { it.isoCode == "rub" }?.quotation ?: Quotation.zero()
         val security = securities.firstOrNull { it.figi == figi }
 
-        balanceHandler.balance.set(balanceRub.units.toDouble() + balanceRub.units.toDouble() * 1e-9)
+        balanceHandler.balance.set(balanceRub.units.toDouble() + balanceRub.nano.toDouble() * 1e-9)
 
 
-        val yandexPrice = account.getLastPrice(figi).getOrThrow()
+        val yandexPrice = account.getLastPrice("BBG006L8G4H1").getOrThrow()
 
 
         val sell = security != null && security.balance > 0u && yandexPrice > lastBuyPrice
