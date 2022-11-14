@@ -18,5 +18,7 @@ interface StrategyService {
     fun getStrategyIds(): Result<List<StrategyUid>>
 
     fun getStrategy(uid: StrategyUid): Result<StrategyInfo>
+
+    fun getRunningBotsCount(uid: StrategyUid): Result<Int>
 }
 
