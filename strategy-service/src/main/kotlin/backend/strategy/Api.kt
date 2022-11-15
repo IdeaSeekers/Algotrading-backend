@@ -1,13 +1,8 @@
 package backend.strategy
 
-typealias StrategyUid = Int
+import backend.common.model.StrategyInfo
 
-data class Strategy(
-    val uid: StrategyUid,
-    val name: String,
-    val description: String,
-    val parameters: ParametersDescription
-)
+typealias StrategyUid = Int
 
 data class ParametersDescription(
     val description: String
@@ -18,10 +13,10 @@ data class Parameters(
 )
 
 interface StrategyService {
-    fun getStrategyContainerFactory(uid: StrategyUid): Result<StrategyContainerFactory>
+    fun getStrategyContainerFactory(uid: StrategyUid): Result<StrategyControllerFactory>
 
-    fun getStrategies(): List<StrategyUid>
+    fun getStrategyIds(): Result<List<StrategyUid>>
 
-    fun getStrategy(uid: StrategyUid): Result<Strategy>
+    fun getStrategy(uid: StrategyUid): Result<StrategyInfo>
 }
 

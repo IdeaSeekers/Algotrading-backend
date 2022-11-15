@@ -1,32 +1,58 @@
-package backend.bot.api
+package backend.bot
 
+import backend.common.model.BotInfo
 import backend.strategy.Parameters
-import backend.strategy.Status
-import backend.strategy.StrategyContainer
+import backend.strategy.StrategyController
 import backend.strategy.StrategyUid
 import backend.tinkoff.account.TinkoffAccount
+import backend.tinkoff.model.Figi
 
 typealias BotUid = Int
 
 typealias BotName = String
 
-data class Bot(
-    val uid: BotUid,
-    val name: BotName,
-    val parameters: Parameters,
-    val status: Status,
-)
-
 interface BotService {
-    fun activeBots(): List<BotUid>
-    fun getBot(uid: BotUid): Result<Bot>
-    fun startBot(strategyUid: StrategyUid, name: BotName, parameters: Parameters): Result<BotUid>
-    fun stopBot(uid: BotUid): Boolean
+    fun getBotIds(): Result<List<BotUid>>
+
+    fun getBot(uid: BotUid): Result<BotInfo>
+
+    fun createBot(
+        name: BotName,
+        strategyUid: StrategyUid,
+        initialBalance: Double,
+        securityFigi: Figi,
+        parameters: Parameters
+    ): Result<BotUid>
+
+    fun deleteBot(uid: BotUid): Result<Boolean>
+
+    fun pauseBot(uid: BotUid): Result<Boolean>
+
+    fun resumeBot(uid: BotUid): Result<Boolean>
+
+    fun getRunningBotIds(): Result<List<BotUid>>
 }
 
 interface BotCluster {
-    fun activeBots(): List<BotUid>
-    fun getBot(uid: BotUid): Result<Bot>
-    fun deploy(container: StrategyContainer, uid: BotUid, name: BotName, parameters: Parameters, tinkoffAccount: TinkoffAccount): Result<Unit>
-    fun stopBot(uid: BotUid): Boolean
+    fun getBotIds(): Result<List<BotUid>>
+
+    fun getBot(uid: BotUid): Result<BotInfo>
+
+    fun deleteBot(uid: BotUid): Result<Boolean>
+
+    fun pauseBot(uid: BotUid): Result<Boolean>
+
+    fun resumeBot(uid: BotUid): Result<Boolean>
+
+    fun getRunningBotIds(): Result<List<BotUid>>
+
+    fun deploy(
+        container: StrategyController,
+        tinkoffAccount: TinkoffAccount,
+        uid: BotUid,
+        name: BotName,
+        strategyUid: StrategyUid,
+        securityFigi: Figi,
+        parameters: Parameters,
+    ): Result<Boolean>
 }

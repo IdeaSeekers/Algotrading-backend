@@ -2,33 +2,26 @@ package backend.bot
 
 import backend.bot.clusters.SimpleCluster
 import backend.bot.service.SimpleBotService
+import backend.common.model.StrategyInfo
 import backend.strategy.Parameters
-import backend.strategy.ParametersDescription
-import backend.strategy.Strategy
 import backend.strategy.service.SimpleStrategyService
-import backend.strategy.strategies.megastupid.MegaStupidStrategyContainerFactory
-import backend.strategy.strategies.stupid.StupidStrategyContainerFactory
+import backend.strategy.strategies.simple.SimpleStrategyControllerFactory
+import backend.strategy.strategies.simple.simpleStrategy
 import backend.tinkoff.account.TinkoffActualAccount
 import backend.tinkoff.account.TinkoffSandboxService
 
 fun main() {
-    val yandexStrategy = Strategy(
-        1,
+    val yandexStrategy = StrategyInfo(
         "Yandex securities",
         "Stupid strategy",
-        ParametersDescription("No parameters")
+        StrategyInfo.Risk.HIGH,
+        emptyList()
     )
 
-    val sberbankStrategy = Strategy(
-        2,
-        "Sberbank securities",
-        "Mega stupid strategy",
-        ParametersDescription("No parameters")
-    )
+    val strategyImpl = ::simpleStrategy
 
     val strategyService = SimpleStrategyService {
-        registerStrategy(yandexStrategy, StupidStrategyContainerFactory())
-        registerStrategy(sberbankStrategy, MegaStupidStrategyContainerFactory())
+        registerStrategy(yandexStrategy, SimpleStrategyControllerFactory(strategyImpl))
     }
 
     val token = "<token>"
@@ -43,11 +36,11 @@ fun main() {
     val service = SimpleBotService {
         withStrategyService(strategyService)
         withAccount(tinkoffAccount)
+
         val cluster = SimpleCluster()
-        addCluster(1, cluster)
-        addCluster(2, cluster) // both strategies start on the same cluster
+        addCluster(0, cluster)
     }
 
-    service.startBot(1, "TestBot1", Parameters(""))
-    service.startBot(2, "TestBot2", Parameters(""))
+    service.createBot("Sberbank", 0, 50_000.0, "BBG004730N88", Parameters(""))
+    service.createBot( "Yandex", 0, 50_000.0, "BBG006L8G4H1", Parameters(""))
 }

@@ -87,6 +87,9 @@ class TinkoffVirtualAccount(
     override fun getLastPrice(figi: Figi): Result<Quotation> =
         actualAccount.getLastPrice(figi)
 
+    override fun getLotByShare(figi: Figi): Result<Int> =
+        actualAccount.getLotByShare(figi)
+
     // internal
 
     private val myOpenOrders: MutableMap<OrderId, OrderState> =
