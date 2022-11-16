@@ -21,7 +21,7 @@ class SimpleCluster : BotCluster {
     private val bots: MutableMap<BotUid, BotWrapper> = mutableMapOf()
 
     override fun getRunningBotIds(): Result<List<BotUid>> =
-        Result.success(bots.keys.toList())
+        Result.success(bots.keys.filter { getBot(it).getOrNull()?.status == BotInfo.Status.RUNNING })
 
     override fun getBotIds(): Result<List<BotUid>> =
         Result.success(bots.keys.toList())
