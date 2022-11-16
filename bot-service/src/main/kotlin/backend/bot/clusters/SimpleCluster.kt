@@ -23,9 +23,8 @@ class SimpleCluster : BotCluster {
     override fun getRunningBotIds(): Result<List<BotUid>> =
         Result.success(bots.keys.toList())
 
-    override fun getBotIds(): Result<List<BotUid>> {
-        TODO("Not yet implemented")
-    }
+    override fun getBotIds(): Result<List<BotUid>> =
+        Result.success(bots.keys.toList())
 
     override fun getBot(uid: BotUid): Result<BotInfo> {
         val wrapper = bots[uid] ?: return Result.failure(BotNotFoundException(uid))
@@ -34,7 +33,7 @@ class SimpleCluster : BotCluster {
         val info = BotInfo(
             wrapper.info.name,
             wrapper.info.strategyId,
-            balance,
+            balance, // TODO: total balance
             wrapper.info.securityFigi,
             status,
             wrapper.info.parameters

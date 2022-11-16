@@ -45,7 +45,7 @@ class SimpleStrategyContainer(
         )
 
     override fun pause(): Result<Boolean> {
-        return Result.success(false) // unsupported
+        return Result.success(false) // TODO: unsupported
     }
 
     override fun delete(): Result<Boolean> {

@@ -1,10 +1,7 @@
 package backend.strategy.service
 
 import backend.common.model.StrategyInfo
-import backend.strategy.StrategyControllerFactory
-import backend.strategy.StrategyService
-import backend.strategy.StrategyUid
-import backend.strategy.UnsupportedStrategyException
+import backend.strategy.*
 
 class SimpleStrategyService(
     configure: Configuration.() -> Unit
@@ -28,6 +25,10 @@ class SimpleStrategyService(
 
     override fun getStrategy(uid: StrategyUid): Result<StrategyInfo> =
         strategies[uid]?.let { Result.success(it) } ?: Result.failure(UnsupportedStrategyException(uid))
+
+    override fun getRunningBotsCount(uid: StrategyUid): Result<Int> {
+        return Result.success(227) // TODO
+    }
 
     interface Configuration {
         fun registerStrategy(strategy: StrategyInfo, factory: StrategyControllerFactory)
