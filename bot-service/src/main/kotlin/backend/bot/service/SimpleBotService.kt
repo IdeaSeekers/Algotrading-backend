@@ -47,6 +47,11 @@ class SimpleBotService(
             .map { it.getRunningBotIds() }
             .run { firstOrNull { it.isFailure } ?: Result.success(flatMap { it.getOrThrow() }) }
 
+    override fun getRunningBotIds(strategyId: Int): Result<List<BotUid>> =
+        botClusters.values
+            .map { it.getRunningBotIds(strategyId) }
+            .run { firstOrNull { it.isFailure } ?: Result.success(flatMap { it.getOrThrow() }) }
+
     override fun createBot(
         name: BotName,
         strategyUid: StrategyUid,
@@ -89,8 +94,8 @@ class SimpleBotService(
         val cluster = bot2Cluster[uid] ?: return Result.failure(BotNotFoundException(uid))
         val res = cluster.deleteBot(uid)
         if (res.isSuccess) {
-            bot2Cluster.remove(uid)
             virtualAccountFactory.closeVirtualAccount(bot2Account.getValue(uid))
+            bot2Cluster.remove(uid)
             bot2Account.remove(uid) // TODO: refactor
         }
         return res

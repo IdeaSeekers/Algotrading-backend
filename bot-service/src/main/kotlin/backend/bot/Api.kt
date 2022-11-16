@@ -31,6 +31,8 @@ interface BotService {
     fun resumeBot(uid: BotUid): Result<Boolean>
 
     fun getRunningBotIds(): Result<List<BotUid>>
+
+    fun getRunningBotIds(strategyId: Int): Result<List<BotUid>>
 }
 
 interface BotCluster {
@@ -46,8 +48,10 @@ interface BotCluster {
 
     fun getRunningBotIds(): Result<List<BotUid>>
 
+    fun getRunningBotIds(strategyId: Int): Result<List<BotUid>>
+
     fun deploy(
-        container: StrategyController,
+        controller: StrategyController,
         tinkoffAccount: TinkoffAccount,
         uid: BotUid,
         name: BotName,
