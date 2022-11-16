@@ -14,11 +14,10 @@ interface StrategyController {
     fun delete(): Result<Boolean>
 
     fun resume(): Result<Boolean>
-    fun balance(): Result<Double>
 }
 
 data class Configuration(
     val tinkoffAccount: TinkoffAccount,
-    val parameters: Parameters,
     val figi: String,
+    val parameters: Map<Int, String>,
 )

@@ -8,7 +8,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-suspend fun simpleStrategy(config: Configuration, balanceHandler: BalanceHandler) {
+suspend fun simpleStrategy(config: Configuration) {
     val account = config.tinkoffAccount
     val figi = config.figi
 
@@ -20,9 +20,6 @@ suspend fun simpleStrategy(config: Configuration, balanceHandler: BalanceHandler
 
         val balanceRub = currencies.firstOrNull { it.isoCode == "rub" }?.quotation ?: Quotation.zero()
         val security = securities.firstOrNull { it.figi == figi }
-
-        balanceHandler.balance.set(balanceRub.units.toDouble() + balanceRub.nano.toDouble() * 1e-9)
-
 
         val figiPrice = account.getLastPrice(figi).getOrThrow()
         val figiLot = account.getLotByShare(figi).getOrThrow().toUInt()

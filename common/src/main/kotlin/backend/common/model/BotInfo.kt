@@ -4,7 +4,6 @@ data class BotInfo(
     val name: String,
     val strategyId: Int,
     val balance: Double, // in rubles
-    val securityFigi: String,
     val status: Status,
     val parameters: List<Parameter>,
 ) {
@@ -17,6 +16,6 @@ data class BotInfo(
 
     data class Parameter(
         val id: Int,
-        val value: Double,
+        val value: String,
     )
 }
