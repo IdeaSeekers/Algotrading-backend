@@ -164,4 +164,10 @@ class BotsDatabase {
         val operationId: Int, val stockId: Int, val count: Int, val price: Double,
         val operationTime: Timestamp
     )
+
+    companion object {
+
+        const val SELL_OPERATION_ID = 1
+        const val BUY_OPERATION_ID = 0
+    }
 }
