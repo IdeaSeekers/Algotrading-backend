@@ -108,7 +108,7 @@ class BotsDatabase {
     fun addOperation(
         botId: Int,
         operationId: Int,
-        stockId: Int,
+        stockId: String,
         stockCount: Int,
         stockCost: Double,
         operationTime: Timestamp
@@ -128,7 +128,7 @@ class BotsDatabase {
                     ops.add(
                         OperationInfo(
                             it.getInt(1),
-                            it.getInt(2),
+                            it.getString(2),
                             it.getInt(3),
                             it.getDouble(4),
                             it.getTimestamp(5)
@@ -160,7 +160,7 @@ class BotsDatabase {
     }
 
     data class OperationInfo(
-        val operationId: Int, val stockId: Int, val count: Int, val price: Double,
+        val operationId: Int, val stockId: String, val count: Int, val price: Double,
         val operationTime: Timestamp
     )
 
