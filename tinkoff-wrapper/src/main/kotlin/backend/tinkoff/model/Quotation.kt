@@ -16,6 +16,9 @@ data class Quotation(
             .setNano(nano.toInt())
             .build()
 
+    fun toDouble(): Double =
+        units.toDouble() + nano.toDouble() * 1e-9
+
     operator fun plus(other: Quotation): Quotation {
         val allNano = nano + other.nano
         val newUnits = units + other.units + allNano / maxNano
