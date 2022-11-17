@@ -90,6 +90,18 @@ class TinkoffVirtualAccount(
     override fun getLotByShare(figi: Figi): Result<Int> =
         actualAccount.getLotByShare(figi)
 
+    fun getTotalBalance(): Result<Quotation> {
+        val totalSecuritiesCost = availableSecurities.getAll().map { security ->
+            val quantity = security.balance
+            val price = getLastPrice(security.figi)
+                .onFailure { return Result.failure(it) }
+                .getOrThrow()
+            price * quantity
+        }.reduce(Quotation::plus)
+        val currentRubleBalance = availableCurrencies.get("rub")?.quotation ?: Quotation.zero()
+        return Result.success(totalSecuritiesCost + currentRubleBalance)
+    }
+
     // internal
 
     private val myOpenOrders: MutableMap<OrderId, OrderState> =

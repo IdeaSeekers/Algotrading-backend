@@ -1,16 +1,10 @@
 package backend.strategy
 
+import backend.common.model.HyperParameterInfo
 import backend.common.model.StrategyInfo
 
 typealias StrategyUid = Int
-
-data class ParametersDescription(
-    val description: String
-)
-
-data class Parameters(
-    val parameters: String
-)
+typealias HyperParameterUid = Int
 
 interface StrategyService {
     fun getStrategyContainerFactory(uid: StrategyUid): Result<StrategyControllerFactory>
@@ -18,5 +12,7 @@ interface StrategyService {
     fun getStrategyIds(): Result<List<StrategyUid>>
 
     fun getStrategy(uid: StrategyUid): Result<StrategyInfo>
+
+    fun getHyperParameter(uid: HyperParameterUid): Result<HyperParameterInfo>
 }
 
