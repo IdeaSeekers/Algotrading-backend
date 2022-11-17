@@ -15,6 +15,7 @@ import backend.tinkoff.account.TinkoffSandboxService
 import backend.tinkoff.account.TinkoffVirtualAccountFactory
 
 object Services {
+
     val strategyService: StrategyService by lazy {
         SimpleStrategyService {
             registerParameter(Id.figiHyperParameterUid, figiHyperParameterInfo)

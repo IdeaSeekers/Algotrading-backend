@@ -10,7 +10,7 @@ import java.sql.Timestamp
 class BotsDatabase {
     val dbConfig = getDatabaseConfig().database
 
-    val db = Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
+    val db = Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/Algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
 
     fun createStrategy(name: String, desctiption: String): Int? {
         return transaction {

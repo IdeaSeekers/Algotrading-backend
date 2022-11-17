@@ -8,8 +8,7 @@ data class DatabaseCredentials(val host: String = "localhost", val port: Int = 1
 data class DatabaseConfig(val database: DatabaseCredentials = DatabaseCredentials())
 
 fun getDatabaseConfig(): DatabaseConfig {
-    val env = System.getenv("ATDB_PATH") ?: { "" }
-    val f = Paths.get("$env/conf.yaml").toFile()
+    val f = Paths.get("./db-wrapper/src/main/resources/conf.yaml").toFile()
     if (!f.exists()) {
         return DatabaseConfig()
     }
