@@ -1,5 +1,6 @@
 package backend.db.bots
 
+import backend.db.common.getDatabaseConfig
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -7,11 +8,9 @@ import org.jetbrains.exposed.sql.transactions.transactionManager
 import java.sql.Timestamp
 
 class BotsDatabase {
-    val url = "jdbc:postgresql://localhost:5432/algotrading"
-    val user = "postgres"
-    val password = "jaja"
+    val dbConfig = getDatabaseConfig().database
 
-    val db = Database.connect(url, driver = "org.postgresql.Driver", user = user, password = password)
+    val db = Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
 
     fun createStrategy(name: String, desctiption: String): Int? {
         return transaction {
@@ -109,7 +108,7 @@ class BotsDatabase {
     fun addOperation(
         botId: Int,
         operationId: Int,
-        stockId: Int,
+        stockId: String,
         stockCount: Int,
         stockCost: Double,
         operationTime: Timestamp
@@ -129,7 +128,7 @@ class BotsDatabase {
                     ops.add(
                         OperationInfo(
                             it.getInt(1),
-                            it.getInt(2),
+                            it.getString(2),
                             it.getInt(3),
                             it.getDouble(4),
                             it.getTimestamp(5)
@@ -161,7 +160,7 @@ class BotsDatabase {
     }
 
     data class OperationInfo(
-        val operationId: Int, val stockId: Int, val count: Int, val price: Double,
+        val operationId: Int, val stockId: String, val count: Int, val price: Double,
         val operationTime: Timestamp
     )
 
