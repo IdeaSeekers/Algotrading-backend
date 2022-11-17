@@ -14,5 +14,6 @@ data class HyperParameterInfo(
     enum class Type {
         INT,
         FLOAT,
+        STRING,
     }
 }

@@ -1,19 +1,23 @@
 package backend.server.routes
 
+import backend.server.Id
 import backend.server.Services
-import backend.server.util.badRequest
-import backend.server.util.exception
 import backend.server.request.PostBotRequest
 import backend.server.request.PutBotRequest
 import backend.server.response.GetBotResponse
 import backend.server.response.GetBotsResponse
 import backend.server.response.PostBotResponse
+import backend.server.util.badRequest
+import backend.server.util.exception
 import backend.server.util.parseId
-import backend.strategy.Parameters
-import io.ktor.application.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.application.call
+import io.ktor.request.receive
+import io.ktor.response.respond
+import io.ktor.routing.Route
+import io.ktor.routing.delete
+import io.ktor.routing.get
+import io.ktor.routing.post
+import io.ktor.routing.put
 
 fun Route.getBots() {
     get("") {
@@ -53,12 +57,15 @@ fun Route.postBot() {
             return@post call.exception(e)
         }
 
+        val parameters = botInfo.parameters.associate { it.id to it.value.toString() }
+            .plus(Id.figiHyperParameterUid to botInfo.security)
+            .plus(Id.balanceHyperParameterUid to botInfo.initial_balance.toString())
+        // these parameters are added explicitly
+
         Services.botService.createBot(
             botInfo.name,
             botInfo.strategy.id,
-            botInfo.initial_balance,
-            botInfo.security,
-            Parameters(botInfo.parameters.joinToString(", ") { "Parameter(${it.id}, ${it.value})" }) // TODO: HashMap<Int, Double>
+            parameters
         )
             .onSuccess { botId ->
                 val bot = PostBotResponse.Bot(botId)

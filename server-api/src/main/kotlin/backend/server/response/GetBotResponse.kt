@@ -8,7 +8,6 @@ data class GetBotResponse(
     val name: String,
     val strategyId: Int,
     val balance: Double,
-    val securityFigi: String,
     val status: Status,
     val parameters: List<Parameter>,
 ) {
@@ -23,7 +22,7 @@ data class GetBotResponse(
     @Serializable
     data class Parameter(
         val id: Int,
-        val value: Double,
+        val value: String,
     )
 
     companion object {
@@ -41,7 +40,6 @@ data class GetBotResponse(
                 botInfo.name,
                 botInfo.strategyId,
                 botInfo.balance,
-                botInfo.securityFigi,
                 status,
                 parameters
             )

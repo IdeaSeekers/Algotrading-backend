@@ -47,7 +47,7 @@ fun Route.getActiveBots() {
             .onFailure { return@get call.badRequest(it.message) }
             .getOrThrow()
 
-        Services.strategyService.getRunningBotsCount(id)
+        Services.botService.getRunningBotsCount(id)
             .onSuccess { botsCount ->
                 val activeBots = GetActiveBotsCountResponse.BotsCount(botsCount)
                 call.respond(GetActiveBotsCountResponse(activeBots))

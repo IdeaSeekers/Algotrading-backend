@@ -4,7 +4,6 @@ import backend.common.model.BotInfo.Status
 import backend.strategy.Configuration
 import backend.strategy.StrategyController
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -12,15 +11,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class BalanceHandler {
-    val balance: AtomicReference<Double> = AtomicReference(0.0)
-}
-
 class SimpleStrategyContainer(
-    private val strategy: suspend (Configuration, BalanceHandler) -> Unit
+    private val strategy: suspend (Configuration) -> Unit
 ) : StrategyController {
-    private val balanceHandler = BalanceHandler()
-
     private val executor = Executors.newSingleThreadExecutor()
     private val dispatcher = executor.asCoroutineDispatcher()
     private val scope = CoroutineScope(dispatcher)
@@ -29,7 +22,7 @@ class SimpleStrategyContainer(
 
     override fun start(configuration: Configuration): Result<Boolean> {
         job = scope.launch {
-            strategy(configuration, balanceHandler)
+            strategy(configuration)
         }
 
         return Result.success(true)
@@ -60,9 +53,4 @@ class SimpleStrategyContainer(
     override fun resume(): Result<Boolean> {
         return Result.success(false) // unsupported
     }
-
-    override fun balance(): Result<Double> {
-        return Result.success(balanceHandler.balance.get())
-    }
-
 }

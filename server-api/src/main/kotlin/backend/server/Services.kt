@@ -3,35 +3,41 @@ package backend.server
 import backend.bot.BotService
 import backend.bot.clusters.SimpleCluster
 import backend.bot.service.SimpleBotService
-import backend.common.model.StrategyInfo
+import backend.server.Info.balanceHyperParameterInfo
+import backend.server.Info.figiHyperParameterInfo
+import backend.server.Info.simpleStrategyInfo
 import backend.strategy.StrategyService
 import backend.strategy.service.SimpleStrategyService
 import backend.strategy.strategies.simple.SimpleStrategyControllerFactory
 import backend.strategy.strategies.simple.simpleStrategy
 import backend.tinkoff.account.TinkoffActualAccount
 import backend.tinkoff.account.TinkoffSandboxService
+import backend.tinkoff.account.TinkoffVirtualAccountFactory
 
 object Services {
-
     val strategyService: StrategyService by lazy {
-        val strategyInfo = StrategyInfo(
-            "Simple strategy",
-            "Super mega hyper ultra stupid strategy",
-            StrategyInfo.Risk.HIGH,
-            emptyList()
-        )
         SimpleStrategyService {
-            registerStrategy(strategyInfo, SimpleStrategyControllerFactory(::simpleStrategy))
+            registerParameter(Id.figiHyperParameterUid, figiHyperParameterInfo)
+            registerParameter(Id.balanceHyperParameterUid, balanceHyperParameterInfo)
+            registerStrategy(
+                Id.simpleStrategyUid,
+                simpleStrategyInfo,
+                SimpleStrategyControllerFactory(::simpleStrategy)
+            )
         }
     }
 
     val botService: BotService by lazy {
         SimpleBotService {
             withStrategyService(strategyService)
-            withAccount(tinkoffAccount)
-
-            val cluster = SimpleCluster()
-            addCluster(id = 0, cluster)
+            val tinkoffAccountFactory = TinkoffVirtualAccountFactory(tinkoffAccount)
+            val cluster = SimpleCluster(
+                Id.simpleStrategyUid,
+                Id.balanceHyperParameterUid,
+                Id.figiHyperParameterUid,
+                tinkoffAccountFactory
+            )
+            addCluster(Id.simpleStrategyUid, cluster)
         }
     }
 

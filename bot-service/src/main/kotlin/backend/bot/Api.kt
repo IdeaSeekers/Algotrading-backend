@@ -1,14 +1,10 @@
 package backend.bot
 
 import backend.common.model.BotInfo
-import backend.strategy.Parameters
 import backend.strategy.StrategyController
 import backend.strategy.StrategyUid
-import backend.tinkoff.account.TinkoffAccount
-import backend.tinkoff.model.Figi
 
 typealias BotUid = Int
-
 typealias BotName = String
 
 interface BotService {
@@ -19,9 +15,7 @@ interface BotService {
     fun createBot(
         name: BotName,
         strategyUid: StrategyUid,
-        initialBalance: Double,
-        securityFigi: Figi,
-        parameters: Parameters
+        parameters: Map<Int, String>
     ): Result<BotUid>
 
     fun deleteBot(uid: BotUid): Result<Boolean>
@@ -31,6 +25,10 @@ interface BotService {
     fun resumeBot(uid: BotUid): Result<Boolean>
 
     fun getRunningBotIds(): Result<List<BotUid>>
+
+    fun getRunningBotIds(uid: StrategyUid): Result<List<BotUid>>
+
+    fun getRunningBotsCount(uid: StrategyUid): Result<Int>
 }
 
 interface BotCluster {
@@ -46,13 +44,12 @@ interface BotCluster {
 
     fun getRunningBotIds(): Result<List<BotUid>>
 
+    fun getRunningBotIds(strategyId: Int): Result<List<BotUid>>
+
     fun deploy(
-        container: StrategyController,
-        tinkoffAccount: TinkoffAccount,
+        controller: StrategyController,
+        name: String,
         uid: BotUid,
-        name: BotName,
-        strategyUid: StrategyUid,
-        securityFigi: Figi,
-        parameters: Parameters,
+        parameters: Map<Int, String>
     ): Result<Boolean>
 }
