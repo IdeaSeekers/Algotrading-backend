@@ -1,5 +1,6 @@
 package backend.tinkoff.account
 
+import backend.statistics.reporter.BotActionReporter
 import backend.tinkoff.error.NoOpenOrderWithSuchIdError
 import backend.tinkoff.error.NotEnoughVirtualMoneyError
 import backend.tinkoff.error.NotEnoughVirtualSecurityError
@@ -11,6 +12,7 @@ import backend.tinkoff.response.PositionsResponse
 import backend.tinkoff.response.PostOrderResponse
 import backend.tinkoff.storage.CurrencyStorage
 import backend.tinkoff.storage.SecurityStorage
+import java.time.Instant
 
 class TinkoffVirtualAccount(
     private val botUid: BotUid,
@@ -93,10 +95,13 @@ class TinkoffVirtualAccount(
     fun getTotalBalance(): Result<Quotation> {
         val totalSecuritiesCost = availableSecurities.getAll().map { security ->
             val quantity = security.balance
+            val lot = getLotByShare(security.figi)
+                .onFailure { return Result.failure(it) }
+                .getOrThrow()
             val price = getLastPrice(security.figi)
                 .onFailure { return Result.failure(it) }
                 .getOrThrow()
-            price * quantity
+            price * quantity * lot.toUInt()
         }.reduce(Quotation::plus)
         val currentRubleBalance = availableCurrencies.get("rub")?.quotation ?: Quotation.zero()
         return Result.success(totalSecuritiesCost + currentRubleBalance)
@@ -109,6 +114,8 @@ class TinkoffVirtualAccount(
 
     private val myExecutedOrders: MutableMap<OrderId, OrderState> =
         mutableMapOf()
+
+    private val botActionReporter = BotActionReporter()
 
     private fun syncStateWith(currentOpenOrdersIds: Set<OrderId>) {
         val executedOrderIds = myOpenOrders.keys.toSet() - currentOpenOrdersIds.toSet()
@@ -189,7 +196,14 @@ class TinkoffVirtualAccount(
         val purchasedSecurity = Security(orderState.figi, orderState.lotsExecuted)
         availableSecurities.forceIncrease(purchasedSecurity)
         myExecutedOrders[orderState.orderId] = orderState
-        // to Statistics: BUY(botUid: Int, figi: String, quantity: UInt, price: Double, timestamp: Instant)
+
+        botActionReporter.executedBuy(
+            botUid,
+            orderState.figi,
+            orderState.lotsExecuted,
+            orderState.totalCost.quotation.toDouble(),
+            Instant.now()
+        )
     }
 
     private fun onCancelBuyOrder(orderState: OrderState) {
@@ -209,7 +223,14 @@ class TinkoffVirtualAccount(
         myOpenOrders.remove(orderState.orderId) ?: return
         availableCurrencies.forceIncrease(orderState.totalCost)
         myExecutedOrders[orderState.orderId] = orderState
-        // to Statistics: SELL(botUid: Int, figi: String, quantity: UInt, price: Double, timestamp: Instant)
+
+        botActionReporter.executedSell(
+            botUid,
+            orderState.figi,
+            orderState.lotsExecuted,
+            orderState.totalCost.quotation.toDouble(),
+            Instant.now()
+        )
     }
 
     private fun onCancelSellOrder(orderState: OrderState) {

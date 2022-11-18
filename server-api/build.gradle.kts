@@ -12,6 +12,7 @@ repositories {
 dependencies {
     implementation(project(":bot-service"))
     implementation(project(":strategy-service"))
+    implementation(project(":statistics-service"))
 
     implementation("io.ktor:ktor-server-netty:1.5.2")
     implementation("io.ktor:ktor-html-builder:1.5.2")

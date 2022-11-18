@@ -1,8 +1,10 @@
 package backend.statistics
 
 import backend.common.model.BotOperation
+import backend.common.model.ReturnInfo
 import backend.db.bots.BotsDatabase
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 class StatisticsAggregator {
@@ -51,7 +53,7 @@ class StatisticsAggregator {
         timestamp_from: Instant? = null,
         timestamp_to: Instant? = null
     ): Result<Double> {
-        TODO()
+        return Result.success(1.1)
     }
 
     fun getStrategyReturnHistory(
@@ -59,7 +61,10 @@ class StatisticsAggregator {
         period: LocalTime,
         timestamp_from: Instant? = null,
         timestamp_to: Instant? = null
-    ): Result<List<backend.common.model.ReturnInfo>> {
-        TODO()
+    ): Result<List<ReturnInfo>> {
+        return Result.success(listOf(
+            ReturnInfo(LocalDateTime.now(), 2.2),
+            ReturnInfo(LocalDateTime.now(), 3.4),
+        ))
     }
 }
