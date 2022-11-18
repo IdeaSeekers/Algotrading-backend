@@ -6,6 +6,7 @@ import backend.bot.service.SimpleBotService
 import backend.server.Info.balanceHyperParameterInfo
 import backend.server.Info.figiHyperParameterInfo
 import backend.server.Info.simpleStrategyInfo
+import backend.statistics.StatisticsAggregator
 import backend.strategy.StrategyService
 import backend.strategy.service.SimpleStrategyService
 import backend.strategy.strategies.simple.SimpleStrategyControllerFactory
@@ -41,6 +42,8 @@ object Services {
             addCluster(Id.simpleStrategyUid, cluster)
         }
     }
+
+    val statisticsAggregator: StatisticsAggregator = StatisticsAggregator()
 
     // internal
 

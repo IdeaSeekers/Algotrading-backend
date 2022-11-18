@@ -4,12 +4,11 @@ import backend.server.Id
 import backend.server.Services
 import backend.server.request.PostBotRequest
 import backend.server.request.PutBotRequest
-import backend.server.response.GetBotResponse
-import backend.server.response.GetBotsResponse
-import backend.server.response.PostBotResponse
+import backend.server.response.*
 import backend.server.util.badRequest
 import backend.server.util.exception
 import backend.server.util.parseId
+import backend.server.util.parseTimestamp
 import io.ktor.application.call
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -114,14 +113,37 @@ fun Route.putBot() {
 
 fun Route.getReturn() {
     get("/{id}/return") {
-        // call.request.queryParameters["timestamp_from"]
-        // call.request.queryParameters["timestamp_to"]
-        //
+        val id = parseId(call.parameters["id"])
+            .onFailure { return@get call.badRequest(it.message) }
+            .getOrThrow()
+
+        val timestampFrom = parseTimestamp(call.request.queryParameters["timestamp_from"])
+        val timestampTo = parseTimestamp(call.request.queryParameters["timestamp_to"])
+
+        Services.statisticsAggregator.getBotReturn(id, timestampFrom, timestampTo)
+            .onSuccess { botReturn ->
+                val botReturnResponse = GetBotReturnResponse(botReturn)
+                call.respond(botReturnResponse)
+            }
+            .onFailure {
+                call.exception(it)
+            }
     }
 }
 
 fun Route.getOperations() {
     get("/{id}/operations") {
-        //
+        val id = parseId(call.parameters["id"])
+            .onFailure { return@get call.badRequest(it.message) }
+            .getOrThrow()
+
+        Services.statisticsAggregator.getBotHistory(id)
+            .onSuccess { botHistory ->
+                val botReturnResponse = GetBotHistoryResponse.fromListOperation(botHistory)
+                call.respond(botReturnResponse)
+            }
+            .onFailure {
+                call.exception(it)
+            }
     }
 }
