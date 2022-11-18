@@ -2,6 +2,7 @@ package backend.server.response
 
 import backend.common.model.ReturnInfo
 import kotlinx.serialization.Serializable
+import java.time.ZoneOffset
 
 @Serializable
 class GetStrategyReturnHistoryResponse(
@@ -10,7 +11,7 @@ class GetStrategyReturnHistoryResponse(
 
     @Serializable
     data class Info(
-        val timestamp: String,
+        val timestamp: Long,
         val average_return: Double
     )
 
@@ -18,7 +19,7 @@ class GetStrategyReturnHistoryResponse(
         fun fromListReturnInfo(listInfo: List<ReturnInfo>) =
             GetStrategyReturnHistoryResponse(
                 listInfo.map { info ->
-                    Info(info.timestamp.toString(), info.returnValue)
+                    Info(info.timestamp.toEpochSecond(ZoneOffset.UTC), info.returnValue)
                 }
             )
     }
