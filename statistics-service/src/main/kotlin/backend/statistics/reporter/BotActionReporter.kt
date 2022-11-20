@@ -10,14 +10,14 @@ class BotActionReporter {
 
     private val botsDatabase = BotsDatabase()
 
-    fun executedBuy(botId: Int, figi: String, quantity: UInt, price: Double, timestamp: Instant) {
+    fun executedBuy(botId: Int, balanceAfterOperation: Double, figi: String, quantity: UInt, price: Double, timestamp: Instant) {
         botsDatabase.addOperation(
             botId, BUY_OPERATION_ID, figi.hashCode(), quantity.toInt(), price,
             Timestamp.from(timestamp)
         )
     }
 
-    fun executedSell(botId: Int, figi: String, quantity: UInt, price: Double, timestamp: Instant) {
+    fun executedSell(botId: Int, balanceAfterOperation: Double, figi: String, quantity: UInt, price: Double, timestamp: Instant) {
         botsDatabase.addOperation(
             botId, SELL_OPERATION_ID, figi.hashCode(), quantity.toInt(), price,
             Timestamp.from(timestamp)
