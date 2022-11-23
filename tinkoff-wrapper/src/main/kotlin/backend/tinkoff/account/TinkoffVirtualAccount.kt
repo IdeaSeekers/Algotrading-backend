@@ -197,8 +197,10 @@ class TinkoffVirtualAccount(
         availableSecurities.forceIncrease(purchasedSecurity)
         myExecutedOrders[orderState.orderId] = orderState
 
+        val totalBalance = getTotalBalance().getOrNull()?.toDouble() ?: 0.0
         botActionReporter.executedBuy(
             botUid,
+            totalBalance,
             orderState.figi,
             orderState.lotsExecuted,
             orderState.totalCost.quotation.toDouble(),
@@ -224,8 +226,10 @@ class TinkoffVirtualAccount(
         availableCurrencies.forceIncrease(orderState.totalCost)
         myExecutedOrders[orderState.orderId] = orderState
 
+        val totalBalance = getTotalBalance().getOrNull()?.toDouble() ?: 0.0
         botActionReporter.executedSell(
             botUid,
+            totalBalance,
             orderState.figi,
             orderState.lotsExecuted,
             orderState.totalCost.quotation.toDouble(),
