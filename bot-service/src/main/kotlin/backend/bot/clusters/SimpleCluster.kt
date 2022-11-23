@@ -5,7 +5,6 @@ import backend.bot.BotNotFoundException
 import backend.bot.BotUid
 import backend.bot.ExpectedHyperParameterException
 import backend.bot.ParseHyperParameterException
-import backend.bot.util.toDouble
 import backend.common.model.BotInfo
 import backend.common.model.BotInfo.Status
 import backend.strategy.Configuration
