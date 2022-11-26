@@ -14,6 +14,7 @@ import backend.strategy.strategies.simple.simpleStrategy
 import backend.tinkoff.account.TinkoffActualAccount
 import backend.tinkoff.account.TinkoffSandboxService
 import backend.tinkoff.account.TinkoffVirtualAccountFactory
+import backend.tinkoff.service.TinkoffInfoService
 
 object Services {
 
@@ -42,6 +43,8 @@ object Services {
             addCluster(Id.simpleStrategyUid, cluster)
         }
     }
+
+    val tinkoffInfoService: TinkoffInfoService = TinkoffInfoService()
 
     val statisticsAggregator: StatisticsAggregator = StatisticsAggregator()
 

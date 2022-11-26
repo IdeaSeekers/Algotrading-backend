@@ -6,8 +6,6 @@ import kotlinx.serialization.Serializable
 data class PostBotRequest(
     val name: String,
     val strategy: Strategy,
-    val initial_balance: Double,
-    val security: String,
     val parameters: List<Parameter>
 ) {
     @Serializable
