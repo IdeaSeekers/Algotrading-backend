@@ -19,7 +19,7 @@ class StatisticsAggregator {
     ): Result<Double> {
         val botOperationsResult = getBotHistory(botId, startTimestamp, endTimestamp)
         val lastBotBalance = botOperationsResult.getOrNull()?.last()?.returnValue
-        val initialBalance = botsDatabase.getDoubleParameter(1, botId)
+        val initialBalance = botsDatabase.getDoubleParameter(botId,1)
 
         if (lastBotBalance == null || initialBalance == null) {
             return Result.failure(Exception("No operation result"))
