@@ -56,9 +56,17 @@ fun Route.postBot() {
             return@post call.exception(e)
         }
 
-        val parameters = botInfo.parameters.associate { it.id to it.value.toString() }
-            .plus(Id.figiHyperParameterUid to botInfo.security)
-            .plus(Id.balanceHyperParameterUid to botInfo.initial_balance.toString())
+        val securityId = botInfo.parameters[Id.figiHyperParameterUid].value.toInt()
+        val securityFigi = Services.tinkoffInfoService.getFigiById(securityId)
+            .onFailure { return@post call.badRequest(it.message) }
+            .getOrThrow()
+
+        val parameters = botInfo.parameters.associate { parameter ->
+            if (parameter.id == Id.figiHyperParameterUid)
+                parameter.id to securityFigi
+            else
+                parameter.id to parameter.value.toString()
+        }
         // these parameters are added explicitly
 
         Services.botService.createBot(

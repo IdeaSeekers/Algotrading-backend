@@ -1,6 +1,8 @@
 package backend.server.response
 
 import backend.common.model.BotInfo
+import backend.server.Id
+import backend.server.Services
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -22,7 +24,7 @@ data class GetBotResponse(
     @Serializable
     data class Parameter(
         val id: Int,
-        val value: String,
+        val value: Double,
     )
 
     companion object {
@@ -33,8 +35,13 @@ data class GetBotResponse(
                 BotInfo.Status.STOPPED -> Status.stopped
                 BotInfo.Status.UNKNOWN -> Status.unknown
             }
-            val parameters = botInfo.parameters.map {
-                Parameter(it.id, it.value)
+            val parameters = botInfo.parameters.map {parameter ->
+                if (parameter.id == Id.figiHyperParameterUid) {
+                    val securityId = Services.tinkoffInfoService.getIdByFigi(parameter.value).getOrThrow()
+                    Parameter(parameter.id, securityId.toDouble())
+                } else {
+                    Parameter(parameter.id, parameter.value.toDouble())
+                }
             }
             return GetBotResponse(
                 botInfo.name,
