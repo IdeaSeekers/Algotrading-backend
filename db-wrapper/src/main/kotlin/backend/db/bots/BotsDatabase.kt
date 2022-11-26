@@ -10,7 +10,7 @@ import java.sql.Timestamp
 class BotsDatabase {
     val dbConfig = getDatabaseConfig().database
 
-    val db = Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/Algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
+    val db = Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
 
     fun createStrategy(name: String, desctiption: String): Int? {
         return transaction {
@@ -21,60 +21,30 @@ class BotsDatabase {
         }
     }
 
-    fun createBot(name: String, desctiption: String, strategyId: Int): Int? {
+    fun createBot(name: String, strategyId: Int): Int? {
         return transaction {
-            exec("select create_bot('$name', '$desctiption', $strategyId);") {
+            exec("select create_bot('$name', $strategyId);") {
                 it.next()
                 it.getInt(1)
             }
         }
     }
 
-    fun createIntParameter(param_name: String, param_description: String, default_param_value: Int): Int? {
+    fun setIntParameter(botId: Int, paramId: Int, newValue: Int) {
         return transaction {
-            exec("select create_int_parameter('$param_name', '$param_description', $default_param_value);") {
-                it.next()
-                it.getInt(1)
-            }
+            exec("select set_int_parameter($botId, $paramId, $newValue);")
         }
     }
 
-    fun createDoubleParameter(paramName: String, paramDescription: String, defaultParamValue: Double) {
+    fun setDoubleParameter(botId: Int, paramId: Int, newValue: Double) {
         return transaction {
-            exec("select create_double_parameter('$paramName', '$paramDescription', $defaultParamValue);") {
-                it.next()
-                it.getInt(1)
-            }
+            exec("select set_double_parameter($botId, $paramId, $newValue);")
         }
     }
 
-    fun addIntParameter(paramId: Int, stratId: Int): Int? {
+    fun setStringParameter(botId: Int, paramId: Int, newValue: String) {
         return transaction {
-            exec("select add_int_parameter($paramId, $stratId);") {
-                it.next()
-                it.getInt(1)
-            }
-        }
-    }
-
-    fun addDoubleParameter(paramId: Int, stratId: Int): Int? {
-        return transaction {
-            exec("select add_double_parameter($paramId, $stratId);") {
-                it.next()
-                it.getInt(1)
-            }
-        }
-    }
-
-    fun setIntParameter(paramId: Int, botId: Int, newValue: Int) {
-        return transaction {
-            exec("select set_int_parameter($paramId, $botId, $newValue);")
-        }
-    }
-
-    fun setDoubleParameter(paramId: Int, botId: Int, newValue: Double) {
-        return transaction {
-            exec("select set_double_parameter($paramId, $botId, $newValue);")
+            exec("select set_string_parameter($botId, $paramId, '$newValue');")
         }
     }
 
@@ -87,20 +57,29 @@ class BotsDatabase {
         }
     }
 
-    fun getIntParameter(paramId: Int, botId: Int): Int? {
+    fun getIntParameter(botId: Int, paramId: Int): Int? {
         return transaction {
-            exec("select get_int_parameter($paramId, $botId);") {
+            exec("select get_int_parameter($botId, $paramId);") {
                 it.next()
                 it.getInt(1)
             }
         }
     }
 
-    fun getDoubleParameter(paramId: Int, botId: Int): Double? {
+    fun getDoubleParameter(botId: Int, paramId: Int): Double? {
         return transaction {
-            exec("select get_double_parameter($paramId, $botId);") {
+            exec("select get_double_parameter($botId, $paramId);") {
                 it.next()
                 it.getDouble(1)
+            }
+        }
+    }
+
+    fun getStringParameter(botId: Int, paramId: Int): String? {
+        return transaction {
+            exec("select get_string_parameter($botId, $paramId);") {
+                it.next()
+                it.getString(1)
             }
         }
     }
@@ -108,13 +87,14 @@ class BotsDatabase {
     fun addOperation(
         botId: Int,
         operationId: Int,
+        currentBotBalance: Double,
         stockId: Int,
         stockCount: Int,
         stockCost: Double,
         operationTime: Timestamp
     ) {
         return transaction {
-            exec("select add_operation($botId, $operationId, $stockId, $stockCount, $stockCost, '$operationTime');")
+            exec("select add_operation($botId, $operationId, $currentBotBalance, $stockId, $stockCount, $stockCost, '$operationTime');")
         }
     }
 
@@ -128,10 +108,11 @@ class BotsDatabase {
                     ops.add(
                         OperationInfo(
                             it.getInt(1),
-                            it.getInt(2),
+                            it.getDouble(2),
                             it.getInt(3),
-                            it.getDouble(4),
-                            it.getTimestamp(5)
+                            it.getInt(4),
+                            it.getDouble(5),
+                            it.getTimestamp(6)
                         )
                     )
                     it.next()
@@ -146,6 +127,23 @@ class BotsDatabase {
     fun getBotsByStrategy(strategyId: Int): List<Int> {
         val bots = transaction {
             exec("select * from get_bots_by_strategy($strategyId);") {
+                val bots = mutableListOf<Int>()
+                if (it.next()) {
+                    while (!it.isAfterLast) {
+                        bots.add(it.getInt(1))
+                        it.next()
+                    }
+                }
+                bots
+            }
+        } ?: listOf()
+
+        return bots
+    }
+
+    fun getAllBots(): List<Int> {
+        val bots = transaction {
+            exec("select * from get_all_bots();") {
                 it.next()
                 val bots = mutableListOf<Int>()
                 while (!it.isAfterLast) {
@@ -159,13 +157,21 @@ class BotsDatabase {
         return bots
     }
 
+    fun getBotName(botId: Int): String? {
+        return transaction {
+            exec("select * from get_bot_name($botId);") {
+                it.next()
+                it.getString(1)
+            }
+        }
+    }
+
     data class OperationInfo(
-        val operationId: Int, val stockId: Int, val count: Int, val price: Double,
+        val operationId: Int, val botBalance: Double, val stockId: Int, val count: Int, val price: Double,
         val operationTime: Timestamp
     )
 
     companion object {
-
         const val SELL_OPERATION_ID = 1
         const val BUY_OPERATION_ID = 0
     }
