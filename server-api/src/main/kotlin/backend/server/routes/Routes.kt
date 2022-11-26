@@ -25,5 +25,8 @@ fun Application.routes() {
             getReturn()
             getOperations()
         }
+        route("security") {
+            getSecurities()
+        }
     }
 }

@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":common"))
     implementation(project(":statistics-service"))
 
     implementation("org.slf4j:slf4j-api:2.0.3")
