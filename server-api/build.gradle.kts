@@ -7,6 +7,7 @@ repositories {
     jcenter()
     mavenCentral()
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven") }
+    maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
@@ -18,6 +19,11 @@ dependencies {
     implementation("io.ktor:ktor-html-builder:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
     implementation("io.ktor:ktor-serialization:1.5.2")
+
+    // Swagger
+    implementation("com.github.nielsfalk:ktor-swagger:v0.7.0")
+    implementation("com.github.ajalt:clikt:2.8.0")
+    implementation("io.ktor:ktor-gson:1.5.2")
 }
 
 application {
