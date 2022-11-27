@@ -10,6 +10,7 @@ import backend.server.util.exception
 import backend.server.util.parseTimestamp
 import de.nielsfalk.ktor.swagger.*
 import io.ktor.application.*
+import io.ktor.http.HttpStatusCode
 import io.ktor.response.*
 import io.ktor.routing.*
 
@@ -90,6 +91,13 @@ fun Route.deleteBot() {
         )
     ) { params ->
         Services.botService.deleteBot(params.id)
+            .onSuccess { successful ->
+                if (successful) {
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.NotFound)
+                }
+            }
             .onFailure {
                 call.exception(it)
             }

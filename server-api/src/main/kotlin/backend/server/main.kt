@@ -19,6 +19,7 @@ fun Application.module() {
         anyHost()
         method(HttpMethod.Get)
         method(HttpMethod.Post)
+        method(HttpMethod.Delete)
         allowHeaders { true }
         allowNonSimpleContentTypes = true
         allowCredentials = true
