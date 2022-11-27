@@ -1,13 +1,18 @@
 package backend.server
 
+import backend.server.routes.routes
+import de.nielsfalk.ktor.swagger.SwaggerSupport
+import de.nielsfalk.ktor.swagger.version.shared.Contact
+import de.nielsfalk.ktor.swagger.version.shared.Information
+import de.nielsfalk.ktor.swagger.version.v2.Swagger
+import de.nielsfalk.ktor.swagger.version.v3.OpenApi
 import io.ktor.application.*
 import io.ktor.features.*
+import io.ktor.gson.*
 import io.ktor.http.*
-import io.ktor.routing.*
-import io.ktor.serialization.*
+import io.ktor.locations.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import kotlinx.serialization.json.Json
 
 fun Application.module() {
     install(CORS) {
@@ -19,13 +24,33 @@ fun Application.module() {
         allowCredentials = true
         allowSameOrigin = true
     }
+    install(DefaultHeaders)
+    install(Compression)
+    install(CallLogging)
     install(ContentNegotiation) {
-        json(Json {
-            prettyPrint = true
-            isLenient = true
-        })
+        gson {
+            setPrettyPrinting()
+        }
     }
-    install(Routing)
+    install(Locations)
+    install(SwaggerSupport) {
+        forwardRoot = true
+        val information = Information(
+            version = "0.1",
+            title = "Algotrading-backend API",
+            contact = Contact(
+                name = "GitHub",
+                url = "https://github.com/IdeaSeekers/Algotrading-backend/"
+            )
+        )
+        swagger = Swagger().apply {
+            info = information
+        }
+        openApi = OpenApi().apply {
+            info = information
+        }
+    }
+    // install(Routing)
     routes()
 }
 
