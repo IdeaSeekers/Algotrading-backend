@@ -1,22 +1,21 @@
-package backend.server
+package backend.server.routes
 
-import backend.server.routes.*
 import io.ktor.application.*
 import io.ktor.routing.*
 
 fun Application.routes() {
     routing {
-        route("/strategy") {
+        // route("/strategy") {
             getStrategies()
             getStrategy()
             getActiveBots()
             getAverageReturn()
             getReturnHistory()
-        }
-        route("/parameter") {
+        // }
+        // route("/parameter") {
             getParameter()
-        }
-        route("/bot") {
+        // }
+        // route("/bot") {
             getBots()
             getBot()
             postBot()
@@ -24,9 +23,9 @@ fun Application.routes() {
             putBot()
             getReturn()
             getOperations()
-        }
-        route("security") {
+        // }
+        // route("security") {
             getSecurities()
-        }
+        // }
     }
 }
