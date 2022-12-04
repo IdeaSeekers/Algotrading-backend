@@ -8,9 +8,9 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-class StatisticsAggregator {
-
-    private val botsDatabase = BotsDatabase()
+class StatisticsAggregator(
+    private val botsDatabase: BotsDatabase
+) {
 
     fun getBotReturn(
         botId: Int,

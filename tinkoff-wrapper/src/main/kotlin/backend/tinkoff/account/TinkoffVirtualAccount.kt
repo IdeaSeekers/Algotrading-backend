@@ -102,7 +102,7 @@ class TinkoffVirtualAccount(
                 .onFailure { return Result.failure(it) }
                 .getOrThrow()
             price * quantity * lot.toUInt()
-        }.reduce(Quotation::plus)
+        }.fold(Quotation.zero(), Quotation::plus)
         val currentRubleBalance = availableCurrencies.get("rub")?.quotation ?: Quotation.zero()
         return Result.success(totalSecuritiesCost + currentRubleBalance)
     }

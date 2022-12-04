@@ -2,15 +2,15 @@ package backend.db.bots
 
 import backend.db.common.getDatabaseConfig
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.transactions.transactionManager
 import java.sql.Timestamp
 
 class BotsDatabase {
     val dbConfig = getDatabaseConfig().database
 
-    val db = Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
+    init {
+        Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
+    }
 
     fun createStrategy(name: String, desctiption: String): Int? {
         return transaction {
@@ -102,9 +102,8 @@ class BotsDatabase {
     fun getOperations(bot_id: Int): List<OperationInfo> {
         val ops = transaction {
             exec("select * from get_operations($bot_id);") {
-                it.next()
                 val ops = mutableListOf<OperationInfo>()
-                while (!it.isAfterLast) {
+                while (it.next()) {
                     ops.add(
                         OperationInfo(
                             it.getInt(1),
@@ -115,7 +114,6 @@ class BotsDatabase {
                             it.getTimestamp(6)
                         )
                     )
-                    it.next()
                 }
                 ops
             }
@@ -128,11 +126,8 @@ class BotsDatabase {
         val bots = transaction {
             exec("select * from get_bots_by_strategy($strategyId);") {
                 val bots = mutableListOf<Int>()
-                if (it.next()) {
-                    while (!it.isAfterLast) {
-                        bots.add(it.getInt(1))
-                        it.next()
-                    }
+                while (it.next()) {
+                    bots.add(it.getInt(1))
                 }
                 bots
             }
@@ -144,11 +139,9 @@ class BotsDatabase {
     fun getAllBots(): List<Int> {
         val bots = transaction {
             exec("select * from get_all_bots();") {
-                it.next()
                 val bots = mutableListOf<Int>()
-                while (!it.isAfterLast) {
+                while (it.next()) {
                     bots.add(it.getInt(1))
-                    it.next()
                 }
                 bots
             }
