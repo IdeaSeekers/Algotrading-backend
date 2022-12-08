@@ -4,15 +4,24 @@ import backend.server.Id
 import backend.server.Services
 import backend.server.request.PostBotRequest
 import backend.server.request.PutBotRequest
-import backend.server.response.*
+import backend.server.response.GetBotHistoryResponse
+import backend.server.response.GetBotResponse
+import backend.server.response.GetBotReturnResponse
+import backend.server.response.GetBotsResponse
+import backend.server.response.PostBotResponse
 import backend.server.util.badRequest
 import backend.server.util.exception
 import backend.server.util.parseTimestamp
 import de.nielsfalk.ktor.swagger.*
 import io.ktor.application.*
+import io.ktor.features.origin
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.*
 import io.ktor.routing.*
+import mu.KotlinLogging
+import net.logstash.logback.argument.StructuredArguments.v
+
+private val logger = KotlinLogging.logger("BotRoutes")
 
 fun Route.getBots() {
     get<SwaggerBots>(
@@ -28,6 +37,11 @@ fun Route.getBots() {
             .onFailure {
                 call.exception(it)
             }
+        logger.info("/bot/",
+            v("REST", "GET"),
+            v("remote", call.request.origin.host),
+            v("response", call.response.status())
+        )
     }
 }
 
@@ -37,7 +51,8 @@ fun Route.getBot() {
             ok<SwaggerBot>(example("model", SwaggerBot.responseExampleGet)),
         )
     ) { params ->
-        Services.botService.getBot(params.id)
+        val id = params.id
+        Services.botService.getBot(id)
             .onSuccess { botInfo ->
                 val bot = GetBotResponse.fromBotInfo(botInfo)
                 call.respond(bot)
@@ -45,6 +60,12 @@ fun Route.getBot() {
             .onFailure {
                 call.exception(it)
             }
+        logger.info("/bot/$id",
+            v("REST", "GET"),
+            v("remote", call.request.origin.host),
+            v("response", call.response.status()),
+            v("id", id)
+        )
     }
 }
 
@@ -81,6 +102,13 @@ fun Route.postBot() {
             .onFailure {
                 call.exception(it)
             }
+        call.application.environment.log.info("hello")
+
+        logger.info("/bot/",
+            v("REST", "POST"),
+            v("remote", call.request.origin.host),
+            v("response", call.response.status())
+        )
     }
 }
 
@@ -90,7 +118,8 @@ fun Route.deleteBot() {
             ok<SwaggerBot>(example("model", SwaggerBot.responseExampleDelete)),
         )
     ) { params ->
-        Services.botService.deleteBot(params.id)
+        val id = params.id
+        Services.botService.deleteBot(id)
             .onSuccess { successful ->
                 if (successful) {
                     call.respond(HttpStatusCode.OK)
@@ -101,6 +130,12 @@ fun Route.deleteBot() {
             .onFailure {
                 call.exception(it)
             }
+        logger.info("/delete/$id",
+            v("REST", "POST"),
+            v("remote", call.request.origin.host),
+            v("response", call.response.status()),
+            v("id", id)
+        )
     }
 }
 
@@ -110,13 +145,20 @@ fun Route.putBot() {
             ok<SwaggerBot>(example("model", SwaggerBot.responseExamplePut)),
         )
     ) { params, putBotRequest ->
+        val id = params.id
         val operationResult = when (putBotRequest.status) {
-            PutBotRequest.Status.running -> Services.botService.resumeBot(params.id)
-            PutBotRequest.Status.paused -> Services.botService.pauseBot(params.id)
+            PutBotRequest.Status.running -> Services.botService.resumeBot(id)
+            PutBotRequest.Status.paused -> Services.botService.pauseBot(id)
         }
         operationResult.onFailure {
             call.exception(it)
         }
+        logger.info("/bot/$id",
+            v("REST", "PUT"),
+            v("remote", call.request.origin.host),
+            v("response", call.response.status()),
+            v("id", id)
+        )
     }
 }
 
@@ -129,7 +171,8 @@ fun Route.getReturn() {
         val timestampFrom = parseTimestamp(call.request.queryParameters["timestamp_from"])
         val timestampTo = parseTimestamp(call.request.queryParameters["timestamp_to"])
 
-        Services.statisticsAggregator.getBotReturn(params.id, timestampFrom, timestampTo)
+        val id = params.id
+        Services.statisticsAggregator.getBotReturn(id, timestampFrom, timestampTo)
             .onSuccess { botReturn ->
                 val botReturnResponse = GetBotReturnResponse(botReturn)
                 call.respond(botReturnResponse)
@@ -137,6 +180,14 @@ fun Route.getReturn() {
             .onFailure {
                 call.exception(it)
             }
+
+        logger.info("/bot/$id/return",
+            v("REST", "GET"),
+            v("remote", call.request.origin.host),
+            v("response", call.response.status()),
+            v("id", id)
+        )
+
     }
 }
 
@@ -146,7 +197,8 @@ fun Route.getOperations() {
             ok<SwaggerBotOperations>(example("model", SwaggerBotOperations.responseExample)),
         )
     ) { params ->
-        Services.statisticsAggregator.getBotHistory(params.id)
+        val id = params.id
+        Services.statisticsAggregator.getBotHistory(id)
             .onSuccess { botHistory ->
                 val botReturnResponse = GetBotHistoryResponse.fromListOperation(botHistory)
                 call.respond(botReturnResponse)
@@ -154,5 +206,12 @@ fun Route.getOperations() {
             .onFailure {
                 call.exception(it)
             }
+
+        logger.info("/bot/$id/operations",
+            v("REST", "GET"),
+            v("remote", call.request.origin.host),
+            v("response", call.response.status()),
+            v("id", id)
+        )
     }
 }

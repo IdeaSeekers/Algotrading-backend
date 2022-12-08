@@ -65,5 +65,5 @@ object Services {
 
     // internal
 
-    private const val token = "<token>" // TODO: handle invalid token
+    private const val token = "t.stkBX-FoQBXYA6ARAW_Z6LP7Xeql-NFqkTvJt62GfIxgv4yYynAeBgP7d-yVm4eIiQ0pUJRmUydft7VpWy-aFQ" // TODO: handle invalid token
 }
