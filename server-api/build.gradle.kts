@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":db-wrapper"))
     implementation(project(":bot-service"))
     implementation(project(":strategy-service"))
     implementation(project(":statistics-service"))

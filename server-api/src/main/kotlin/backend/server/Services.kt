@@ -2,7 +2,8 @@ package backend.server
 
 import backend.bot.BotService
 import backend.bot.clusters.SimpleCluster
-import backend.bot.service.SimpleBotService
+import backend.bot.service.DbBotService
+import backend.db.bots.BotsDatabase
 import backend.server.Info.balanceHyperParameterInfo
 import backend.server.Info.figiHyperParameterInfo
 import backend.server.Info.simpleStrategyInfo
@@ -17,8 +18,11 @@ import backend.tinkoff.account.TinkoffVirtualAccountFactory
 import backend.tinkoff.service.TinkoffInfoService
 
 object Services {
+    // internal
 
-    val strategyService: StrategyService by lazy {
+    private val botsDatabase = BotsDatabase()
+
+    val strategyService: StrategyService = run {
         SimpleStrategyService {
             registerParameter(Id.figiHyperParameterUid, figiHyperParameterInfo)
             registerParameter(Id.balanceHyperParameterUid, balanceHyperParameterInfo)
@@ -30,8 +34,19 @@ object Services {
         }
     }
 
-    val botService: BotService by lazy {
-        SimpleBotService {
+    // internal
+
+    private val tinkoffAccount = run {
+        val sandboxService = TinkoffSandboxService(token)
+        val accountId = sandboxService.createSandboxAccount().getOrThrow()
+        sandboxService.sandboxPayIn(accountId, 1_000_000_u)
+        TinkoffActualAccount(token, accountId)
+    }
+
+    val botService: BotService = run { // we need to load bots from the db, so we can't compute it lazily
+        DbBotService(
+            botsDatabase
+        ) {
             withStrategyService(strategyService)
             val tinkoffAccountFactory = TinkoffVirtualAccountFactory(tinkoffAccount)
             val cluster = SimpleCluster(
@@ -46,16 +61,9 @@ object Services {
 
     val tinkoffInfoService: TinkoffInfoService = TinkoffInfoService()
 
-    val statisticsAggregator: StatisticsAggregator = StatisticsAggregator()
+    val statisticsAggregator: StatisticsAggregator = StatisticsAggregator(botsDatabase)
 
     // internal
 
     private const val token = "<token>" // TODO: handle invalid token
-
-    private val tinkoffAccount by lazy {
-        val sandboxService = TinkoffSandboxService(token)
-        val accountId = sandboxService.createSandboxAccount().getOrThrow()
-        sandboxService.sandboxPayIn(accountId, 1_000_000_u)
-        TinkoffActualAccount(token, accountId)
-    }
 }

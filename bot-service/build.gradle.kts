@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    api(project(":db-wrapper"))
     api(project(":common"))
     api(project(":strategy-service"))
 }
