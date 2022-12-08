@@ -10,7 +10,7 @@ The backend part of Algotrading
 docker pull docker.elastic.co/elasticsearch/elasticsearch:8.5.3
 docker pull docker.elastic.co/kibana/kibana:8.5.3
 docker network create elastic
-docker run --name elasticsearch --net elastic -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -e "xpack.security.enabled=false" docker.elastic.co/elasticsearch/elasticsearch:8.5.3
+docker run -d --name elasticsearch --net elastic -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -e "xpack.security.enabled=false" docker.elastic.co/elasticsearch/elasticsearch:8.5.3
 docker run -d --name kibana --net elastic -p 5601:5601 -e "ELASTICSEARCH_HOSTS=https://elasticsearch:9200" docker.elastic.co/kibana/kibana:8.5.3
 ```
 
