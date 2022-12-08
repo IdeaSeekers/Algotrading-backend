@@ -5,7 +5,7 @@ import ru.tinkoff.piapi.contract.v1.Quotation as TinkoffQuotation
 data class Quotation(
     val units: UInt,
     val nano: UInt,
-) {
+) : Comparable<Quotation> {
 
     fun isEqualToZero(): Boolean =
         units == 0U && nano == 0U
@@ -42,7 +42,7 @@ data class Quotation(
         return Quotation(newUnits, newNano)
     }
 
-    operator fun compareTo(other: Quotation): Int =
+    override operator fun compareTo(other: Quotation): Int =
         when {
             units < other.units -> -1
             units > other.units -> +1

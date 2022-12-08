@@ -4,6 +4,7 @@ import backend.strategy.Configuration
 import backend.tinkoff.model.MarketPrice
 import backend.tinkoff.model.OrderStatus
 import backend.tinkoff.model.Quotation
+import java.util.TreeSet
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -12,7 +13,7 @@ suspend fun simpleStrategy(config: Configuration) {
     val account = config.tinkoffAccount
     val figi = config.figi
 
-    var lastBuyPrice = Quotation.zero()
+    val boughtPrices = TreeSet<Quotation>()
 
     while (currentCoroutineContext().isActive) {
 
@@ -25,10 +26,12 @@ suspend fun simpleStrategy(config: Configuration) {
         val figiLot = account.getLotByShare(figi).getOrThrow().toUInt()
         val figiLotPrice = figiPrice * figiLot
 
-        val sell = security != null && security.balance > 0u && figiLotPrice > lastBuyPrice
+        val sell =
+            security != null && security.balance > 0u && (!boughtPrices.isEmpty() && figiLotPrice > boughtPrices.first())
 
         if (sell) {
             account.postSellOrder(figi, 1u, MarketPrice).getOrThrow()
+            boughtPrices.pollFirst()
 
             continue
         }
@@ -40,9 +43,9 @@ suspend fun simpleStrategy(config: Configuration) {
         val response = account.postBuyOrder(figi, 1u, MarketPrice).getOrThrow()
 
         if (response.status == OrderStatus.FILL) {
-            lastBuyPrice = response.totalCost.quotation
+            boughtPrices += response.totalCost.quotation
         }
 
-        delay(1000)
+        delay(5000)
     }
 }
