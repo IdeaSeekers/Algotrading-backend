@@ -102,7 +102,7 @@ fun Route.getReturnHistory() {
             ok<SwaggerReturnHistory>(example("model", SwaggerReturnHistory.responseExample)),
         )
     ) { params ->
-        Services.statisticsAggregator.getStrategyReturnHistory(params.id, LocalTime.of(0, 0, 1))
+        Services.statisticsAggregator.getStrategyReturnHistory(params.id, LocalTime.of(23, 59, 59))
             .onSuccess { history ->
                 val historyReturnResponse = GetStrategyReturnHistoryResponse.fromListReturnInfo(history)
                 call.respond(historyReturnResponse)

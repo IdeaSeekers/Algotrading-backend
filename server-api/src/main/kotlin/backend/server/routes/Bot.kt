@@ -161,38 +161,44 @@ fun Route.putBot() {
 }
 
 fun Route.getReturn() {
-    get<SwaggerBotReturn>(
-        "return".responds(
-            ok<SwaggerBotReturn>(example("model", SwaggerBotReturn.responseExample)),
-        )
-    ) { params ->
-        val timestampFrom = parseTimestamp(call.request.queryParameters["timestamp_from"])
-        val timestampTo = parseTimestamp(call.request.queryParameters["timestamp_to"])
+    authenticate(JwtConfiguration.authName) {
+        get<SwaggerBotReturn>(
+            "return".responds(
+                ok<SwaggerBotReturn>(example("model", SwaggerBotReturn.responseExample)),
+            )
+        ) { params ->
+            call.principal<JWTPrincipal>() ?: return@get call.unauthorized()
+            val timestampFrom = parseTimestamp(call.request.queryParameters["timestamp_from"])
+            val timestampTo = parseTimestamp(call.request.queryParameters["timestamp_to"])
 
-        Services.statisticsAggregator.getBotReturn(params.id, timestampFrom, timestampTo)
-            .onSuccess { botReturn ->
-                val botReturnResponse = GetBotReturnResponse(botReturn)
-                call.respond(botReturnResponse)
-            }
-            .onFailure {
-                call.exception(it)
-            }
+            Services.statisticsAggregator.getBotReturn(params.id, timestampFrom, timestampTo)
+                .onSuccess { botReturn ->
+                    val botReturnResponse = GetBotReturnResponse(botReturn)
+                    call.respond(botReturnResponse)
+                }
+                .onFailure {
+                    call.exception(it)
+                }
+        }
     }
 }
 
 fun Route.getOperations() {
-    get<SwaggerBotReturn>(
-        "history".responds(
-            ok<SwaggerBotOperations>(example("model", SwaggerBotOperations.responseExample)),
-        )
-    ) { params ->
-        Services.statisticsAggregator.getBotHistory(params.id)
-            .onSuccess { botHistory ->
-                val botReturnResponse = GetBotHistoryResponse.fromListOperation(botHistory)
-                call.respond(botReturnResponse)
-            }
-            .onFailure {
-                call.exception(it)
-            }
+    authenticate(JwtConfiguration.authName) {
+        get<SwaggerBotReturn>(
+            "history".responds(
+                ok<SwaggerBotOperations>(example("model", SwaggerBotOperations.responseExample)),
+            )
+        ) { params ->
+            call.principal<JWTPrincipal>() ?: return@get call.unauthorized()
+            Services.statisticsAggregator.getBotHistory(params.id)
+                .onSuccess { botHistory ->
+                    val botReturnResponse = GetBotHistoryResponse.fromListOperation(botHistory)
+                    call.respond(botReturnResponse)
+                }
+                .onFailure {
+                    call.exception(it)
+                }
+        }
     }
 }

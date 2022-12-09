@@ -69,7 +69,11 @@ class StatisticsAggregator(
             getBotReturn(botId, timestamp_from, timestamp_to).getOrNull()
         }
 
-        val averageReturn = botsReturn.reduce { returnSum, botReturn -> returnSum + botReturn } / botsReturn.size
+        val averageReturn = if (botsReturn.isNotEmpty()) {
+            botsReturn.reduce { returnSum, botReturn -> returnSum + botReturn } / botsReturn.size
+        } else {
+            0.0
+        }
 
         return Result.success(averageReturn)
     }
@@ -84,7 +88,8 @@ class StatisticsAggregator(
 
         var currentPeriod = timestamp_from
         while (currentPeriod < timestamp_to) {
-            val returnAtPeriod = getStrategyReturnAverage(strategyId, currentPeriod, currentPeriod).getOrNull()
+            val nextPeriod = currentPeriod.plusNanos(period.toNanoOfDay())
+            val returnAtPeriod = getStrategyReturnAverage(strategyId, currentPeriod, nextPeriod).getOrNull()
             returnAtPeriod?.let {
                 returnInfos.add(
                     ReturnInfo(
@@ -93,7 +98,7 @@ class StatisticsAggregator(
                     )
                 )
             }
-            currentPeriod.plusNanos(period.toNanoOfDay())
+            currentPeriod = nextPeriod
         }
         return Result.success(returnInfos)
     }

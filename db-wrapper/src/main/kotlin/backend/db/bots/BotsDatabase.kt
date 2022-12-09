@@ -167,7 +167,7 @@ open class BotsDatabase {
     )
 
     companion object {
-        const val SELL_OPERATION_ID = 1
-        const val BUY_OPERATION_ID = 0
+        const val SELL_OPERATION_ID = 2
+        const val BUY_OPERATION_ID = 1
     }
 }
