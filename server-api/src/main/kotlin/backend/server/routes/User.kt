@@ -23,6 +23,8 @@ fun Route.userSignUp() {
     post<SwaggerUserSignUp, UserSignUpRequest>(
         "register".examples(
             example("amogus", SwaggerUserSignUp.requestExample)
+        ).responds(
+            ok<SwaggerUserSignUp>(example("ok", SwaggerUserSignUp.responseExample))
         )
     ) { _, user ->
         Services.userService.addUser(user.toUser())
