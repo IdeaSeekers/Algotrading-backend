@@ -33,6 +33,9 @@ open class UserService(
     fun getBotService(username: Username): BotService? =
         botServices[username]
 
+    fun getAllBotServices(): List<BotService> =
+        botServices.values.toList()
+
     // internal
 
     private fun addNewUser(user: User): Result<Unit> {
