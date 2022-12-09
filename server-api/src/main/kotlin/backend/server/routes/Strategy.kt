@@ -2,13 +2,17 @@ package backend.server.routes
 
 import backend.server.Services
 import backend.server.response.*
+import backend.server.util.JwtConfiguration
 import backend.server.util.exception
 import backend.server.util.parseTimestamp
+import backend.server.util.unauthorized
 import de.nielsfalk.ktor.swagger.example
 import de.nielsfalk.ktor.swagger.get
 import de.nielsfalk.ktor.swagger.ok
 import de.nielsfalk.ktor.swagger.responds
 import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.auth.jwt.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import java.time.LocalTime
@@ -48,19 +52,27 @@ fun Route.getStrategy() {
 }
 
 fun Route.getActiveBots() {
-    get<SwaggerActiveBots>(
-        "count".responds(
-            ok<SwaggerActiveBots>(example("model", SwaggerActiveBots.responseExample)),
-        )
-    ) { params ->
-        Services.botService.getRunningBotsCount(params.id)
-            .onSuccess { botsCount ->
-                val activeBots = GetActiveBotsCountResponse.BotsCount(botsCount)
-                call.respond(GetActiveBotsCountResponse(activeBots))
-            }
-            .onFailure {
-                call.exception(it)
-            }
+    authenticate(JwtConfiguration.authName) {
+        get<SwaggerActiveBots>(
+            "count".responds(
+                ok<SwaggerActiveBots>(example("model", SwaggerActiveBots.responseExample)),
+            )
+        ) { params ->
+            val principal = call.principal<JWTPrincipal>()
+                ?: return@get call.unauthorized()
+            val username = principal.payload.getClaim(JwtConfiguration.fieldName).asString()
+            val botService = Services.userService.getBotService(username)
+                ?: return@get call.unauthorized()
+
+            botService.getRunningBotsCount(params.id)
+                .onSuccess { botsCount ->
+                    val activeBots = GetActiveBotsCountResponse.BotsCount(botsCount)
+                    call.respond(GetActiveBotsCountResponse(activeBots))
+                }
+                .onFailure {
+                    call.exception(it)
+                }
+        }
     }
 }
 

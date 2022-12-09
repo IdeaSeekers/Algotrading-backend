@@ -17,3 +17,6 @@ suspend fun ApplicationCall.badRequest(message: String?) =
         text = message ?: defaultErrorMessage,
         status = HttpStatusCode.BadRequest
     )
+
+suspend fun ApplicationCall.unauthorized(message: String = "Token is not valid or has expired") =
+    respond(HttpStatusCode.Unauthorized, message)

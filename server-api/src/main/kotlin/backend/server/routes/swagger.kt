@@ -3,6 +3,8 @@
 package backend.server.routes
 
 import backend.server.request.PostBotRequest
+import backend.server.request.UserSignInRequest
+import backend.server.request.UserSignUpRequest
 import backend.server.response.*
 import de.nielsfalk.ktor.swagger.version.shared.Group
 import io.ktor.locations.*
@@ -154,7 +156,7 @@ class SwaggerParameter(val id: Int) {
 
 @Group("security")
 @Location("/security")
-class SwaggerSecurities() {
+class SwaggerSecurities {
     companion object {
         val responseExample = GetSecuritiesResponse(
             listOf(
@@ -163,5 +165,45 @@ class SwaggerSecurities() {
                 GetSecuritiesResponse.Security(1, "Сбер"),
             )
         )
+    }
+}
+
+// user
+
+@Group("user")
+@Location("/user/signup")
+class SwaggerUserSignUp {
+    companion object {
+        val requestExample = UserSignUpRequest(
+            "amogus",
+            "sus",
+            "<tinkoff-token>"
+        )
+
+        val responseExample = Unit
+    }
+}
+
+@Group("user")
+@Location("/user/signin")
+class SwaggerUserSignIn {
+    companion object {
+        val requestExample = UserSignInRequest(
+            "amogus",
+            "sus",
+        )
+
+        val responseExample = UserSignInResponse(
+            "<jwt-token>",
+            "<tinkoff-token>"
+        )
+    }
+}
+
+@Group("user")
+@Location("/user/amount")
+class SwaggerUserAmount {
+    companion object {
+        val responseExample = UserAmountResponse(123456.78)
     }
 }

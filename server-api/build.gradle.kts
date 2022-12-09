@@ -14,6 +14,7 @@ val ktorVersion = "1.6.8"
 
 dependencies {
     implementation(project(":db-wrapper"))
+    implementation(project(":user-service"))
     implementation(project(":bot-service"))
     implementation(project(":strategy-service"))
     implementation(project(":statistics-service"))

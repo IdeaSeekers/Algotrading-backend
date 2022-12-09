@@ -1,7 +1,4 @@
-package backend.server
-
-import backend.common.model.HyperParameterInfo
-import backend.common.model.StrategyInfo
+package backend.common.model
 
 object Info {
     val figiHyperParameterInfo = HyperParameterInfo(

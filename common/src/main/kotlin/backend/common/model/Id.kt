@@ -1,4 +1,4 @@
-package backend.server
+package backend.common.model
 
 object Id {
     // this is required, because these hyperparameters are obligatory
