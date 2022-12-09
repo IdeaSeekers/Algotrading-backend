@@ -2,15 +2,17 @@ package backend.user
 
 import backend.bot.BotService
 import backend.bot.clusters.SimpleCluster
-import backend.bot.service.SimpleBotService
+import backend.bot.service.DbBotService
 import backend.common.model.Id
 import backend.common.model.User
+import backend.db.bots.BotsDatabase
 import backend.strategy.StrategyService
 import backend.tinkoff.account.TinkoffActualAccount
 import backend.tinkoff.account.TinkoffSandboxService
 import backend.tinkoff.account.TinkoffVirtualAccountFactory
 
 open class UserService(
+    private val botsDatabase: BotsDatabase,
     private val strategyService: StrategyService
 ) {
 
@@ -64,10 +66,10 @@ open class UserService(
     }
 
     protected open fun initBotService(tinkoffAccount: TinkoffActualAccount): BotService =
-        SimpleBotService {
+        DbBotService(botsDatabase) {
             withStrategyService(strategyService)
             val tinkoffAccountFactory = TinkoffVirtualAccountFactory(tinkoffAccount)
-            // TODO: use user.username in BotService for bot ids
+            // TODO: use user.username in BotService for bot ids ?
             val cluster = SimpleCluster(
                 Id.simpleStrategyUid,
                 Id.balanceHyperParameterUid,

@@ -2,6 +2,7 @@ package backend.user
 
 import backend.bot.BotService
 import backend.common.model.User
+import backend.db.bots.BotsDatabase
 import backend.strategy.StrategyService
 import backend.tinkoff.account.TinkoffActualAccount
 import org.junit.jupiter.api.Test
@@ -111,15 +112,17 @@ internal class UserServiceTest {
 
     private val tinkoffAccountMock = mock<TinkoffActualAccount>()
     private val botServiceMock = mock<BotService>()
+    private val botsDatabaseMock = mock<BotsDatabase>()
     private val strategyServiceMock = mock<StrategyService>()
 
-    private val userService = UserServiceMock(tinkoffAccountMock, botServiceMock, strategyServiceMock)
+    private val userService = UserServiceMock(tinkoffAccountMock, botServiceMock, botsDatabaseMock, strategyServiceMock)
 
     inner class UserServiceMock(
         private val tinkoffAccount: TinkoffActualAccount,
         private val botService: BotService,
-        strategyService: StrategyService
-    ) : UserService(strategyService) {
+        botsDatabaseMock: BotsDatabase,
+        strategyService: StrategyService,
+    ) : UserService(botsDatabaseMock, strategyService) {
 
         override fun initTinkoffAccount(user: User) =
             if (user.tinkoff == "fail")
