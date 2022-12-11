@@ -18,12 +18,9 @@ class StatisticsAggregator(
         endTimestamp: Instant? = null
     ): Result<Double> {
         val botOperationsResult = getBotHistory(botId, startTimestamp, endTimestamp)
-        val lastBotBalance = botOperationsResult.getOrNull()?.last()?.returnValue
+        val lastBotBalance = botOperationsResult.getOrNull()?.lastOrNull()?.returnValue ?: 0.0
         val initialBalance = botsDatabase.getDoubleParameter(botId,1)
-
-        if (lastBotBalance == null || initialBalance == null) {
-            return Result.failure(Exception("No operation result"))
-        }
+            ?: return Result.failure(Exception("No operation result"))
 
         if (lastBotBalance.isFinite().not() || initialBalance.isFinite().not()) {
             return Result.failure(Exception("Incorrect initial or current balance"))
@@ -104,6 +101,6 @@ class StatisticsAggregator(
     }
 
     companion object {
-        private const val serviceStartTime = "2022-11-23T05:00:00Z"
+        private const val serviceStartTime = "2022-12-10T05:00:00Z"
     }
 }

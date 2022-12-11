@@ -185,7 +185,7 @@ fun Route.getReturn() {
 
 fun Route.getOperations() {
     authenticate(JwtConfiguration.authName) {
-        get<SwaggerBotReturn>(
+        get<SwaggerBotOperations>(
             "history".responds(
                 ok<SwaggerBotOperations>(example("model", SwaggerBotOperations.responseExample)),
             )
