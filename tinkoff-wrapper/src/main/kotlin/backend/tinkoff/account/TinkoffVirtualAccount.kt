@@ -96,11 +96,9 @@ class TinkoffVirtualAccount(
         val totalSecuritiesCost = availableSecurities.getAll().map { security ->
             val quantity = security.balance
             val lot = getLotByShare(security.figi)
-                .onFailure { return Result.failure(it) }
-                .getOrThrow()
+                .getOrElse { return Result.failure(it) }
             val price = getLastPrice(security.figi)
-                .onFailure { return Result.failure(it) }
-                .getOrThrow()
+                .getOrElse { return Result.failure(it) }
             price * quantity * lot.toUInt()
         }.fold(Quotation.zero(), Quotation::plus)
         val currentRubleBalance = availableCurrencies.get("rub")?.quotation ?: Quotation.zero()
