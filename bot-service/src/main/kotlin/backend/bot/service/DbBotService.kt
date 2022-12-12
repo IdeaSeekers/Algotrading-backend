@@ -8,6 +8,7 @@ import backend.bot.BotService
 import backend.bot.BotUid
 import backend.bot.HyperParameterCannotBeLoaded
 import backend.common.model.BotInfo
+import backend.common.model.Id
 import backend.db.bots.BotsDatabase
 import backend.strategy.StrategyService
 import backend.strategy.StrategyUid
@@ -85,8 +86,12 @@ class DbBotService(
     ): Result<BotUid> {
         val uid = db.createBot(name, strategyUid) ?: return Result.failure(BotCannotBeLoaded(name, strategyUid))
 
-        parameters.forEach { paramId, value ->
-            db.setStringParameter(uid, paramId, value)
+        parameters.forEach { (paramId, value) ->
+            when (paramId) {
+                Id.figiHyperParameterUid -> db.setStringParameter(uid, paramId, value)
+                Id.balanceHyperParameterUid -> db.setDoubleParameter(uid, paramId, value.toDouble())
+                else -> db.setStringParameter(uid, paramId, value)
+            }
         }
 
         return initBot(strategyUid, name, uid, parameters)
