@@ -1,12 +1,18 @@
 package backend.server
 
 import backend.server.routes.routes
+import backend.server.util.JwtConfiguration
+import backend.server.util.unauthorized
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import de.nielsfalk.ktor.swagger.SwaggerSupport
 import de.nielsfalk.ktor.swagger.version.shared.Contact
 import de.nielsfalk.ktor.swagger.version.shared.Information
 import de.nielsfalk.ktor.swagger.version.v2.Swagger
 import de.nielsfalk.ktor.swagger.version.v3.OpenApi
 import io.ktor.application.*
+import io.ktor.auth.*
+import io.ktor.auth.jwt.*
 import io.ktor.features.*
 import io.ktor.gson.*
 import io.ktor.http.*
@@ -49,6 +55,34 @@ fun Application.module() {
         }
         openApi = OpenApi().apply {
             info = information
+            security = listOf(mapOf("basic" to listOf("bearer")))
+            components.securitySchemes["basic"] = mapOf(
+                "type" to "http",
+                "scheme" to "bearer",
+                "bearerFormat" to "JWT",
+            )
+        }
+    }
+    install(Authentication) {
+        jwt(JwtConfiguration.authName) {
+            realm = JwtConfiguration.realm
+            verifier(
+                JWT
+                    .require(Algorithm.HMAC256(JwtConfiguration.secret))
+                    .withAudience(JwtConfiguration.audience)
+                    .withIssuer(JwtConfiguration.issuer)
+                    .build()
+            )
+            validate { credential ->
+                if (credential.payload.getClaim(JwtConfiguration.fieldName).asString() != "") {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+            challenge { _, _ ->
+                call.unauthorized()
+            }
         }
     }
     // install(Routing)

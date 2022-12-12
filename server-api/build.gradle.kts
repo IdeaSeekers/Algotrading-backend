@@ -10,21 +10,26 @@ repositories {
     maven { url = uri("https://jitpack.io") }
 }
 
+val ktorVersion = "1.6.8"
+
 dependencies {
     implementation(project(":db-wrapper"))
+    implementation(project(":user-service"))
     implementation(project(":bot-service"))
     implementation(project(":strategy-service"))
     implementation(project(":statistics-service"))
 
-    implementation("io.ktor:ktor-server-netty:1.5.2")
-    implementation("io.ktor:ktor-html-builder:1.5.2")
+    implementation("io.ktor:ktor-html-builder:$ktorVersion")
+    implementation("io.ktor:ktor-serialization:$ktorVersion")
+    implementation("io.ktor:ktor-auth:$ktorVersion")
+    implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
-    implementation("io.ktor:ktor-serialization:1.5.2")
 
     // Swagger
     implementation("com.github.nielsfalk:ktor-swagger:v0.7.0")
     implementation("com.github.ajalt:clikt:2.8.0")
-    implementation("io.ktor:ktor-gson:1.5.2")
+    implementation("io.ktor:ktor-gson:$ktorVersion")
 }
 
 application {

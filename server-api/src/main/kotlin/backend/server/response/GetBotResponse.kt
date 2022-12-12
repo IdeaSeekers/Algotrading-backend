@@ -1,8 +1,8 @@
 package backend.server.response
 
 import backend.common.model.BotInfo
-import backend.server.Id
 import backend.server.Services
+import backend.common.model.Id
 import kotlinx.serialization.Serializable
 
 @Serializable

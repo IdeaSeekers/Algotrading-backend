@@ -53,7 +53,18 @@ fun Route.getActiveBots() {
             ok<SwaggerActiveBots>(example("model", SwaggerActiveBots.responseExample)),
         )
     ) { params ->
-        Services.botService.getRunningBotsCount(params.id)
+        val botServices = Services.userService.getAllBotServices()
+        val botsCountResult = botServices.map { botService ->
+            botService.getRunningBotsCount(params.id)
+        }.fold(Result.success(0)) { acc, value ->
+            when {
+                acc.isFailure -> acc
+                value.isFailure -> value
+                else -> Result.success(acc.getOrThrow() + value.getOrThrow())
+            }
+        }
+
+        botsCountResult
             .onSuccess { botsCount ->
                 val activeBots = GetActiveBotsCountResponse.BotsCount(botsCount)
                 call.respond(GetActiveBotsCountResponse(activeBots))
@@ -90,7 +101,7 @@ fun Route.getReturnHistory() {
             ok<SwaggerReturnHistory>(example("model", SwaggerReturnHistory.responseExample)),
         )
     ) { params ->
-        Services.statisticsAggregator.getStrategyReturnHistory(params.id, LocalTime.of(0, 0, 1))
+        Services.statisticsAggregator.getStrategyReturnHistory(params.id, LocalTime.of(23, 59, 59))
             .onSuccess { history ->
                 val historyReturnResponse = GetStrategyReturnHistoryResponse.fromListReturnInfo(history)
                 call.respond(historyReturnResponse)

@@ -1,3 +1,5 @@
+@file:Suppress("SqlNoDataSourceInspection")
+
 package backend.db.bots
 
 import backend.db.common.getDatabaseConfig
@@ -5,7 +7,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Timestamp
 
-class BotsDatabase {
+open class BotsDatabase {
     val dbConfig = getDatabaseConfig().database
 
     init {
@@ -165,7 +167,7 @@ class BotsDatabase {
     )
 
     companion object {
-        const val SELL_OPERATION_ID = 1
-        const val BUY_OPERATION_ID = 0
+        const val SELL_OPERATION_ID = 2
+        const val BUY_OPERATION_ID = 1
     }
 }

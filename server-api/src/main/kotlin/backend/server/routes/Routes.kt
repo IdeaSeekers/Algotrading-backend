@@ -27,5 +27,10 @@ fun Application.routes() {
         // route("security") {
             getSecurities()
         // }
+        // route("/user") {
+            userSignUp()
+            userSignIn()
+            getUserAmount()
+        // }
     }
 }

@@ -13,7 +13,7 @@ import ru.tinkoff.piapi.contract.v1.PriceType
 import ru.tinkoff.piapi.core.InvestApi
 import java.util.*
 
-class TinkoffActualAccount(
+open class TinkoffActualAccount(
     token: UserToken,
     private val accountId: AccountId,
 ) : TinkoffAccount {
