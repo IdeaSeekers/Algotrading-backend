@@ -48,7 +48,12 @@ class DbBotService(
             val name = db.getBotName(botId) ?: throw BotNotFoundException(botId)
 
             val parameters = strategyParamInfos.associate { (paramId, _) ->
-                paramId to (db.getStringParameter(botId, paramId) ?: throw HyperParameterCannotBeLoaded(botId, paramId))
+                val paramValue = when (paramId) {
+                    Id.figiHyperParameterUid -> db.getStringParameter(botId, paramId)
+                    Id.balanceHyperParameterUid -> db.getDoubleParameter(botId, paramId)?.toString()
+                    else -> db.getStringParameter(botId, paramId)
+                }
+                paramId to (paramValue ?: throw HyperParameterCannotBeLoaded(botId, paramId))
             }
 
             initBot(strategyUid, name, botId, parameters)
