@@ -7,11 +7,9 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Timestamp
 
-open class BotsDatabase {
-    val dbConfig = getDatabaseConfig().database
-
+class BotsDatabase : AlgotradingDatabase {
     init {
-        Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
+        initializeDatabase()
     }
 
     fun createStrategy(name: String, desctiption: String): Int? {
@@ -23,9 +21,9 @@ open class BotsDatabase {
         }
     }
 
-    fun createBot(name: String, strategyId: Int): Int? {
+    fun createBot(name: String, strategyId: Int, userId: Int): Int? {
         return transaction {
-            exec("select create_bot('$name', $strategyId);") {
+            exec("select create_bot('$name', $strategyId, $userId);") {
                 it.next()
                 it.getInt(1)
             }
