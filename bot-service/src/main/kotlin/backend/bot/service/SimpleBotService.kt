@@ -52,6 +52,7 @@ class SimpleBotService(
     override fun createBot(
         name: BotName,
         strategyUid: StrategyUid,
+        ownerUsername: String, // TODO: unused
         parameters: Map<Int, String>
     ): Result<BotUid> {
         val factory = strategyService.getStrategyContainerFactory(strategyUid).getOrElse { return Result.failure(it) }
