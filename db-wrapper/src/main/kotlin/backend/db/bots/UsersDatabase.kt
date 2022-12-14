@@ -1,19 +1,21 @@
+@file:Suppress("LeakingThis", "SqlNoDataSourceInspection")
+
 package backend.db.bots
 
 import org.jetbrains.exposed.sql.transactions.transaction
 
-class UsersDatabase : AlgotradingDatabase {
+open class UsersDatabase : AlgotradingDatabase {
     init {
         initializeDatabase()
     }
 
-    fun createUser(username: String, password: String, tinkoffToken: String) {
+    open fun createUser(username: String, password: String, tinkoffToken: String) {
         transaction {
             exec("select create_user('$username', '$password', '$tinkoffToken');")
         }
     }
 
-    fun getUser(username: String): DatabaseUser? {
+    open fun getUser(username: String): DatabaseUser? {
         return transaction {
             exec("select * from get_user('$username');") {
                 it.next()
