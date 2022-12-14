@@ -95,6 +95,7 @@ fun Route.postBot() {
             botService.createBot(
                 botInfo.name,
                 botInfo.strategy.id,
+                username,
                 parameters
             )
                 .onSuccess { botId ->
