@@ -24,18 +24,10 @@ open class UserService(
         else
             addNewUser(user)
 
-    fun findUser(username: String, password: String): User? {
-        val maybeUser = usersDatabase.getUser(username)
-        if (maybeUser?.password != password) {
-            return null
-        }
-
-        val user = User(
-            maybeUser.username,
-            maybeUser.password,
-            maybeUser.tinkoffToken
-        )
-        if (!tinkoffAccounts.containsKey(maybeUser.username)) {
+    fun loginUser(username: String, password: String): User? {
+        val user = findUser(username, password)
+            ?: return null
+        if (!tinkoffAccounts.containsKey(user.username)) {
             initServices(user)
         }
         return user
@@ -61,6 +53,18 @@ open class UserService(
         tinkoffAccounts[user.username] = tinkoffAccount
         botServices[user.username] = botService
         return Result.success(Unit)
+    }
+
+    private fun findUser(username: String, password: String): User? {
+        val maybeUser = usersDatabase.getUser(username)
+        if (maybeUser?.password != password) {
+            return null
+        }
+        return User(
+            maybeUser.username,
+            maybeUser.password,
+            maybeUser.tinkoffToken
+        )
     }
 
     private fun addNewUser(user: User): Result<Unit> =

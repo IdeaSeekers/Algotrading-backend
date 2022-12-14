@@ -54,7 +54,7 @@ internal class UserServiceTest {
         fun `findUser should return registered user`() {
             `when`(usersDatabaseMock.getUser(userNikita.username)).thenReturn(userNikita.toDatabase())
 
-            val maybeUser = userService.findUser(userNikita.username, userNikita.password)
+            val maybeUser = userService.loginUser(userNikita.username, userNikita.password)
             assertEquals(userNikita, maybeUser)
         }
 
@@ -64,9 +64,9 @@ internal class UserServiceTest {
             `when`(usersDatabaseMock.getUser(userBagrorg.username)).thenReturn(userBagrorg.toDatabase())
             `when`(usersDatabaseMock.getUser(userFailed.username)).thenReturn(null)
 
-            val maybeUserNikita = userService.findUser(userNikita.username, userNikita.password)
-            val maybeUserBagrorg = userService.findUser(userBagrorg.username, userBagrorg.password)
-            val maybeUserFailed = userService.findUser(userFailed.username, userFailed.password)
+            val maybeUserNikita = userService.loginUser(userNikita.username, userNikita.password)
+            val maybeUserBagrorg = userService.loginUser(userBagrorg.username, userBagrorg.password)
+            val maybeUserFailed = userService.loginUser(userFailed.username, userFailed.password)
 
             assertEquals(userNikita, maybeUserNikita)
             assertEquals(userBagrorg, maybeUserBagrorg)
@@ -76,7 +76,7 @@ internal class UserServiceTest {
         @Test
         fun `findUser should return null for unregistered user`() {
             userService.addUser(userBagrorg)
-            val maybeUser = userService.findUser(userNikita.username, userNikita.password)
+            val maybeUser = userService.loginUser(userNikita.username, userNikita.password)
             assertNull(maybeUser)
         }
     }
