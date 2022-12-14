@@ -1,9 +1,7 @@
-@file:Suppress("SqlNoDataSourceInspection")
+@file:Suppress("LeakingThis", "SqlNoDataSourceInspection")
 
 package backend.db.bots
 
-import backend.db.common.getDatabaseConfig
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Timestamp
 
