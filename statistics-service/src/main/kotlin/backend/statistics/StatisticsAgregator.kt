@@ -63,7 +63,7 @@ class StatisticsAggregator(
         val botsReturn = strategyBots.mapNotNull { botId ->
             getBotReturn(botId, startTimestamp, endTimestamp).getOrNull()
         }
-        return Result.success(botsReturn.average())
+        return Result.success(if (botsReturn.isEmpty()) 0.0 else botsReturn.average())
     }
 
     fun getStrategyReturnHistory(
@@ -102,7 +102,7 @@ class StatisticsAggregator(
             }
             returnHistory += ReturnInfo(
                 LocalDateTime.ofInstant(currentTime, ZoneOffset.UTC),
-                botsReturnValues.average()
+                if (botsReturnValues.isEmpty()) 0.0 else botsReturnValues.average()
             )
             currentTime = currentTime.plusNanos(periodNanos)
         }
