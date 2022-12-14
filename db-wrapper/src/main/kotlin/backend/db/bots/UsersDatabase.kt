@@ -7,18 +7,15 @@ class UsersDatabase : AlgotradingDatabase {
         initializeDatabase()
     }
 
-    fun createUser(username: String, password: String, tinkoffToken: String): Int? {
-        return transaction {
-            exec("select create_user('$username', '$password', '$tinkoffToken');") {
-                it.next()
-                it.getInt(1)
-            }
+    fun createUser(username: String, password: String, tinkoffToken: String) {
+        transaction {
+            exec("select create_user('$username', '$password', '$tinkoffToken');")
         }
     }
 
-    fun getUser(userId: Int): DatabaseUser? {
+    fun getUser(username: String): DatabaseUser? {
         return transaction {
-            exec("select * from get_user($userId);") {
+            exec("select * from get_user('$username');") {
                 it.next()
                 DatabaseUser(
                     it.getString(1),
@@ -29,9 +26,9 @@ class UsersDatabase : AlgotradingDatabase {
         }
     }
 
-    fun setNewToken(userId: Int, newTinkoffToken: String) {
+    fun setNewToken(username: String, newTinkoffToken: String) {
         return transaction {
-            exec("select set_user_tinkoff_token($userId, '$newTinkoffToken');")
+            exec("select set_user_tinkoff_token('$username', '$newTinkoffToken');")
         }
     }
 

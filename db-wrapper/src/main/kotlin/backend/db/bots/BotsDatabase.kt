@@ -21,9 +21,9 @@ class BotsDatabase : AlgotradingDatabase {
         }
     }
 
-    fun createBot(name: String, strategyId: Int, userId: Int): Int? {
+    fun createBot(name: String, strategyId: Int, ownerUsername: String): Int? {
         return transaction {
-            exec("select create_bot('$name', $strategyId, $userId);") {
+            exec("select create_bot('$name', $strategyId, '$ownerUsername');") {
                 it.next()
                 it.getInt(1)
             }
