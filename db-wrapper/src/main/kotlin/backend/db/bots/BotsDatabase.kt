@@ -8,19 +8,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Timestamp
 
 open class BotsDatabase {
-    val dbConfig = getDatabaseConfig().database
+    private val dbConfig = getDatabaseConfig().database
 
     init {
         Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
-    }
-
-    fun createStrategy(name: String, desctiption: String): Int? {
-        return transaction {
-            exec("select create_strategy('$name', '$desctiption');") {
-                it.next()
-                it.getInt(1)
-            }
-        }
     }
 
     fun createBot(name: String, strategyId: Int): Int? {
@@ -102,11 +93,11 @@ open class BotsDatabase {
 
     // TODO: Parse table
     fun getOperations(bot_id: Int): List<OperationInfo> {
-        val ops = transaction {
+        return transaction {
             exec("select * from get_operations($bot_id);") {
-                val ops = mutableListOf<OperationInfo>()
+                val operations = mutableListOf<OperationInfo>()
                 while (it.next()) {
-                    ops.add(
+                    operations.add(
                         OperationInfo(
                             it.getInt(1),
                             it.getDouble(2),
@@ -117,15 +108,13 @@ open class BotsDatabase {
                         )
                     )
                 }
-                ops
+                operations
             }
         } ?: listOf()
-
-        return ops
     }
 
     fun getBotsByStrategy(strategyId: Int): List<Int> {
-        val bots = transaction {
+        return transaction {
             exec("select * from get_bots_by_strategy($strategyId);") {
                 val bots = mutableListOf<Int>()
                 while (it.next()) {
@@ -134,12 +123,10 @@ open class BotsDatabase {
                 bots
             }
         } ?: listOf()
-
-        return bots
     }
 
     fun getAllBots(): List<Int> {
-        val bots = transaction {
+        return transaction {
             exec("select * from get_all_bots();") {
                 val bots = mutableListOf<Int>()
                 while (it.next()) {
@@ -148,8 +135,6 @@ open class BotsDatabase {
                 bots
             }
         } ?: listOf()
-
-        return bots
     }
 
     fun getBotName(botId: Int): String? {
@@ -167,7 +152,7 @@ open class BotsDatabase {
     )
 
     companion object {
-        const val SELL_OPERATION_ID = 2
         const val BUY_OPERATION_ID = 1
+        const val SELL_OPERATION_ID = 2
     }
 }

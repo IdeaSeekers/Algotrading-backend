@@ -162,7 +162,7 @@ class SwaggerSecurities {
             listOf(
                 GetSecuritiesResponse.Security(0, "Нижнекамскнефтехим"),
                 GetSecuritiesResponse.Security(1, "Яндекс"),
-                GetSecuritiesResponse.Security(1, "Сбер"),
+                GetSecuritiesResponse.Security(2, "Сбер"),
             )
         )
     }
