@@ -17,14 +17,19 @@ open class UsersDatabase : AlgotradingDatabase {
 
     open fun getUser(username: String): DatabaseUser? {
         return transaction {
-            exec("select * from get_user('$username');") {
-                it.next()
+            val user = exec("select * from get_user('$username');") {
+                if (!it.next())
+                    return@exec DatabaseUser("null", "null", "null")
                 DatabaseUser(
                     it.getString(1),
                     it.getString(2),
                     it.getString(3),
                 )
             }
+            if (user == DatabaseUser("null", "null", "null"))
+                null
+            else
+                user
         }
     }
 
