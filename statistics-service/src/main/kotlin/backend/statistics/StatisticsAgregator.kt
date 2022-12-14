@@ -1,12 +1,10 @@
 package backend.statistics
 
 import backend.common.model.BotOperation
+import backend.common.model.Id
 import backend.common.model.ReturnInfo
 import backend.db.bots.BotsDatabase
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneOffset
+import java.time.*
 
 class StatisticsAggregator(
     private val botsDatabase: BotsDatabase
@@ -17,16 +15,18 @@ class StatisticsAggregator(
         startTimestamp: Instant? = null,
         endTimestamp: Instant? = null
     ): Result<Double> {
-        val botOperationsResult = getBotHistory(botId, startTimestamp, endTimestamp)
-        val lastBotBalance = botOperationsResult.getOrNull()?.lastOrNull()?.returnValue ?: 0.0
-        val initialBalance = botsDatabase.getDoubleParameter(botId,1)
-            ?: return Result.failure(Exception("No operation result"))
+        val botOperations = getBotHistory(botId, startTimestamp, endTimestamp)
+            .getOrElse { return Result.failure(it) }
 
-        if (lastBotBalance.isFinite().not() || initialBalance.isFinite().not()) {
-            return Result.failure(Exception("Incorrect initial or current balance"))
+        return when (botOperations.size) {
+            0 -> Result.success(0.0)
+            1 -> Result.success(botOperations.last().returnValue)
+            else -> {
+                val firstReturnValue = botOperations.first().returnValue
+                val lastReturnValue = botOperations.last().returnValue
+                Result.success(lastReturnValue - firstReturnValue)
+            }
         }
-
-        return Result.success(lastBotBalance - initialBalance)
     }
 
     fun getBotHistory(
@@ -34,23 +34,21 @@ class StatisticsAggregator(
         startTimestamp: Instant? = null,
         endTimestamp: Instant? = null
     ): Result<List<BotOperation>> {
+        val initialBalance = botsDatabase.getDoubleParameter(botId, Id.balanceHyperParameterUid)
+            ?: return Result.failure(Exception("No parameter with id ${Id.balanceHyperParameterUid} in DB"))
 
-        var operationsByBotId = botsDatabase.getOperations(botId).asSequence()
-
-        startTimestamp?.let { timestamp ->
-            operationsByBotId = operationsByBotId.filter { it.operationTime.toInstant() > timestamp }
+        val startInstant = startTimestamp ?: Instant.MIN
+        val endInstant = endTimestamp ?: Instant.MAX
+        val operations = botsDatabase.getOperations(botId).filter {
+            it.operationTime.toLocalDateTime().toInstant(ZoneOffset.UTC) in startInstant..endInstant
         }
 
-        endTimestamp?.let { timestamp ->
-            operationsByBotId = operationsByBotId.filter { it.operationTime.toInstant() < timestamp }
-        }
-
-        val history = operationsByBotId.toList().map {
+        val history = operations.map {
             BotOperation(
-                BotOperation.Type.values()[it.operationId],
-                it.operationTime.toLocalDateTime(),
-                it.price * it.count,
-                0.0 // TOOD(mandelshtamd): add operation return
+                type = BotOperation.Type.values()[it.operationId - 1],
+                timestamp = it.operationTime.toLocalDateTime(),
+                executedPrice = it.price * it.count,
+                returnValue = it.botBalance - initialBalance
             )
         }
         return Result.success(history)
@@ -58,49 +56,57 @@ class StatisticsAggregator(
 
     fun getStrategyReturnAverage(
         strategyId: Int,
-        timestamp_from: Instant? = null,
-        timestamp_to: Instant? = null
+        startTimestamp: Instant? = null,
+        endTimestamp: Instant? = null
     ): Result<Double> {
         val strategyBots = botsDatabase.getBotsByStrategy(strategyId).toSet()
         val botsReturn = strategyBots.mapNotNull { botId ->
-            getBotReturn(botId, timestamp_from, timestamp_to).getOrNull()
+            getBotReturn(botId, startTimestamp, endTimestamp).getOrNull()
         }
-
-        val averageReturn = if (botsReturn.isNotEmpty()) {
-            botsReturn.reduce { returnSum, botReturn -> returnSum + botReturn } / botsReturn.size
-        } else {
-            0.0
-        }
-
-        return Result.success(averageReturn)
+        return Result.success(botsReturn.average())
     }
 
     fun getStrategyReturnHistory(
         strategyId: Int,
         period: LocalTime,
-        timestamp_from: Instant = Instant.parse(serviceStartTime),
-        timestamp_to: Instant = Instant.now()
+        startTimestamp: Instant? = null,
+        endTimestamp: Instant? = null
     ): Result<List<ReturnInfo>> {
-        val returnInfos = mutableListOf<ReturnInfo>()
-
-        var currentPeriod = timestamp_from
-        while (currentPeriod < timestamp_to) {
-            val nextPeriod = currentPeriod.plusNanos(period.toNanoOfDay())
-            val returnAtPeriod = getStrategyReturnAverage(strategyId, currentPeriod, nextPeriod).getOrNull()
-            returnAtPeriod?.let {
-                returnInfos.add(
-                    ReturnInfo(
-                        LocalDateTime.ofInstant(currentPeriod, ZoneOffset.UTC),
-                        returnAtPeriod
-                    )
-                )
-            }
-            currentPeriod = nextPeriod
+        val strategyBots = botsDatabase.getBotsByStrategy(strategyId).toSet()
+        val botsHistory = strategyBots.mapNotNull { botId ->
+            getBotHistory(botId, startTimestamp, endTimestamp).getOrNull()
         }
-        return Result.success(returnInfos)
-    }
+        if (botsHistory.isEmpty()) {
+            return Result.success(listOf())
+        }
 
-    companion object {
-        private const val serviceStartTime = "2022-12-10T05:00:00Z"
+        val botsNotEmptyHistory = botsHistory.filter { it.isNotEmpty() }
+        val startTime = startTimestamp ?: botsNotEmptyHistory.minOf { operations ->
+            operations.minOf { it.timestamp }.toInstant(ZoneOffset.UTC).minusSeconds(1)
+        }
+        val endTime = endTimestamp ?: botsNotEmptyHistory.maxOf { operations ->
+            operations.maxOf { it.timestamp }.toInstant(ZoneOffset.UTC).plusSeconds(1)
+        }
+        val periodNanos = period.toNanoOfDay()
+
+        val returnHistory = mutableListOf<ReturnInfo>()
+
+        var currentTime = startTime
+        while (currentTime <= endTime.plusNanos(periodNanos)) {
+            val botsReturnValues = botsHistory.map { operations ->
+                val currentOperation = operations.lastOrNull {
+                    val operationTime = it.timestamp.toInstant(ZoneOffset.UTC)
+                    operationTime < currentTime
+                }
+                currentOperation?.returnValue ?: 0.0
+            }
+            returnHistory += ReturnInfo(
+                LocalDateTime.ofInstant(currentTime, ZoneOffset.UTC),
+                botsReturnValues.average()
+            )
+            currentTime = currentTime.plusNanos(periodNanos)
+        }
+
+        return Result.success(returnHistory)
     }
 }
