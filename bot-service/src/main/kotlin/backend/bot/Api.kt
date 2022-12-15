@@ -15,6 +15,7 @@ interface BotService {
     fun createBot(
         name: BotName,
         strategyUid: StrategyUid,
+        ownerUsername: String,
         parameters: Map<Int, String>
     ): Result<BotUid>
 

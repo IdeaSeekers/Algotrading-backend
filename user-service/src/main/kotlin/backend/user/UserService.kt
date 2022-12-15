@@ -6,25 +6,31 @@ import backend.bot.service.DbBotService
 import backend.common.model.Id
 import backend.common.model.User
 import backend.db.bots.BotsDatabase
+import backend.db.bots.UsersDatabase
 import backend.strategy.StrategyService
 import backend.tinkoff.account.TinkoffActualAccount
 import backend.tinkoff.account.TinkoffSandboxService
 import backend.tinkoff.account.TinkoffVirtualAccountFactory
 
 open class UserService(
+    private val usersDatabase: UsersDatabase,
     private val botsDatabase: BotsDatabase,
     private val strategyService: StrategyService
 ) {
 
     fun addUser(user: User): Result<Unit> =
-        if (users.containsKey(user.username))
+        if (usersDatabase.getUser(user.username) != null)
             updateExistentUser(user)
         else
             addNewUser(user)
 
-    fun findUser(username: String, password: String): User? {
-        val maybeUser = users[username]
-        return if (maybeUser?.password == password) maybeUser else null
+    fun loginUser(username: String, password: String): User? {
+        val user = findUser(username, password)
+            ?: return null
+        if (!tinkoffAccounts.containsKey(user.username)) {
+            initServices(user)
+        }
+        return user
     }
 
     fun getTinkoffAccount(username: Username): TinkoffActualAccount? =
@@ -38,7 +44,7 @@ open class UserService(
 
     // internal
 
-    private fun addNewUser(user: User): Result<Unit> {
+    private fun initServices(user: User): Result<Unit> {
         val tinkoffAccount = initTinkoffAccount(user).getOrElse {
             return Result.failure(it)
         }
@@ -46,13 +52,28 @@ open class UserService(
 
         tinkoffAccounts[user.username] = tinkoffAccount
         botServices[user.username] = botService
-        users[user.username] = user
-
         return Result.success(Unit)
     }
 
+    private fun findUser(username: String, password: String): User? {
+        val maybeUser = usersDatabase.getUser(username)
+        if (maybeUser?.password != password) {
+            return null
+        }
+        return User(
+            maybeUser.username,
+            maybeUser.password,
+            maybeUser.tinkoffToken
+        )
+    }
+
+    private fun addNewUser(user: User): Result<Unit> =
+        initServices(user).onSuccess {
+            usersDatabase.createUser(user.username, user.password, user.tinkoff)
+        }
+
     private fun updateExistentUser(user: User): Result<Unit> {
-        users[user.username] = user
+        usersDatabase.setNewToken(user.username, user.tinkoff)
         return Result.success(Unit)
     }
 
@@ -83,8 +104,6 @@ open class UserService(
         }
 
     // internal fields
-
-    private val users = mutableMapOf<Username, User>() // TODO: Database here
 
     private val tinkoffAccounts = mutableMapOf<Username, TinkoffActualAccount>()
 

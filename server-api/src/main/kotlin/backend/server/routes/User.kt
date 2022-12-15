@@ -41,7 +41,7 @@ fun Route.userSignIn() {
             ok<SwaggerUserSignIn>(example("tokens", SwaggerUserSignIn.responseExample))
         )
     ) { _, userRequest ->
-        val maybeUser = Services.userService.findUser(userRequest.username, userRequest.password)
+        val maybeUser = Services.userService.loginUser(userRequest.username, userRequest.password)
 
         if (maybeUser == null) {
             call.respond(HttpStatusCode.NotFound, "User not found")

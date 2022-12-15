@@ -1,6 +1,7 @@
 package backend.server.response
 
 import backend.common.model.BotOperation
+import java.time.ZoneOffset
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -11,7 +12,7 @@ data class GetBotHistoryResponse(
     @Serializable
     data class Operation(
         val type: Type,
-        val timestamp: String,
+        val timestamp: Long,
         val executed_price: Double,
         val `return`: Double
     )
@@ -32,7 +33,7 @@ data class GetBotHistoryResponse(
                     }
                     Operation(
                         operationType,
-                        operation.timestamp.toString(),
+                        operation.timestamp.toEpochSecond(ZoneOffset.UTC),
                         operation.executedPrice,
                         operation.returnValue
                     )

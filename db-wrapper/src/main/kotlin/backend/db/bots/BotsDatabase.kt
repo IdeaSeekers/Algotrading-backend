@@ -1,22 +1,18 @@
-@file:Suppress("SqlNoDataSourceInspection")
+@file:Suppress("LeakingThis", "SqlNoDataSourceInspection")
 
 package backend.db.bots
 
-import backend.db.common.getDatabaseConfig
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.sql.Timestamp
 
-open class BotsDatabase {
-    private val dbConfig = getDatabaseConfig().database
-
+open class BotsDatabase : AlgotradingDatabase {
     init {
-        Database.connect("jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/algotrading", driver = "org.postgresql.Driver", user = dbConfig.user, password = dbConfig.pass)
+        initializeDatabase()
     }
 
-    fun createBot(name: String, strategyId: Int): Int? {
+    fun createBot(name: String, strategyId: Int, ownerUsername: String): Int? {
         return transaction {
-            exec("select create_bot('$name', $strategyId);") {
+            exec("select create_bot('$name', $strategyId, '$ownerUsername');") {
                 it.next()
                 it.getInt(1)
             }

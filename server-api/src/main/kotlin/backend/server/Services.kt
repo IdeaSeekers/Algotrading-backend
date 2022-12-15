@@ -5,6 +5,7 @@ import backend.common.model.Info.balanceHyperParameterInfo
 import backend.common.model.Info.figiHyperParameterInfo
 import backend.common.model.Info.simpleStrategyInfo
 import backend.db.bots.BotsDatabase
+import backend.db.bots.UsersDatabase
 import backend.statistics.StatisticsAggregator
 import backend.strategy.StrategyService
 import backend.strategy.service.SimpleStrategyService
@@ -14,6 +15,8 @@ import backend.tinkoff.service.TinkoffInfoService
 import backend.user.UserService
 
 object Services {
+
+    private val usersDatabase = UsersDatabase()
 
     private val botsDatabase = BotsDatabase()
 
@@ -27,7 +30,7 @@ object Services {
         )
     }
 
-    val userService: UserService = UserService(botsDatabase, strategyService)
+    val userService: UserService = UserService(usersDatabase, botsDatabase, strategyService)
 
     val tinkoffInfoService: TinkoffInfoService = TinkoffInfoService()
 

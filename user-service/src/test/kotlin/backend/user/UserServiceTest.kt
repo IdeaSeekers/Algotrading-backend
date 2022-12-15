@@ -3,6 +3,7 @@ package backend.user
 import backend.bot.BotService
 import backend.common.model.User
 import backend.db.bots.BotsDatabase
+import backend.db.bots.UsersDatabase
 import backend.strategy.StrategyService
 import backend.tinkoff.account.TinkoffActualAccount
 import org.junit.jupiter.api.Test
@@ -10,9 +11,19 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
+import org.mockito.Mockito.`when`
 import org.mockito.kotlin.mock
 
 internal class UserServiceTest {
+
+    private val tinkoffAccountMock = mock<TinkoffActualAccount>()
+    private val botServiceMock = mock<BotService>()
+    private val usersDatabaseMock = mock<UsersDatabase>()
+    private val botsDatabaseMock = mock<BotsDatabase>()
+    private val strategyServiceMock = mock<StrategyService>()
+
+    private val userService = UserServiceMock(tinkoffAccountMock, botServiceMock, usersDatabaseMock, botsDatabaseMock, strategyServiceMock)
+
 
     @Nested
     @DisplayName("addUser")
@@ -20,12 +31,16 @@ internal class UserServiceTest {
 
         @Test
         fun `addUser should register user`() {
+            `when`(usersDatabaseMock.getUser(userNikita.username)).thenReturn(null)
+
             val result = userService.addUser(userNikita)
             assertTrue(result.isSuccess)
         }
 
         @Test
         fun `addUser should fail if tinkoff fails`() {
+            `when`(usersDatabaseMock.getUser(userFailed.username)).thenReturn(null)
+
             val result = userService.addUser(userFailed)
             assertTrue(result.isFailure)
         }
@@ -37,19 +52,21 @@ internal class UserServiceTest {
 
         @Test
         fun `findUser should return registered user`() {
-            userService.addUser(userNikita)
-            val maybeUser = userService.findUser(userNikita.username, userNikita.password)
+            `when`(usersDatabaseMock.getUser(userNikita.username)).thenReturn(userNikita.toDatabase())
+
+            val maybeUser = userService.loginUser(userNikita.username, userNikita.password)
             assertEquals(userNikita, maybeUser)
         }
 
         @Test
         fun `findUser should return all (and only) registered users`() {
-            userService.addUser(userNikita)
-            userService.addUser(userBagrorg)
+            `when`(usersDatabaseMock.getUser(userNikita.username)).thenReturn(userNikita.toDatabase())
+            `when`(usersDatabaseMock.getUser(userBagrorg.username)).thenReturn(userBagrorg.toDatabase())
+            `when`(usersDatabaseMock.getUser(userFailed.username)).thenReturn(null)
 
-            val maybeUserNikita = userService.findUser(userNikita.username, userNikita.password)
-            val maybeUserBagrorg = userService.findUser(userBagrorg.username, userBagrorg.password)
-            val maybeUserFailed = userService.findUser(userFailed.username, userFailed.password)
+            val maybeUserNikita = userService.loginUser(userNikita.username, userNikita.password)
+            val maybeUserBagrorg = userService.loginUser(userBagrorg.username, userBagrorg.password)
+            val maybeUserFailed = userService.loginUser(userFailed.username, userFailed.password)
 
             assertEquals(userNikita, maybeUserNikita)
             assertEquals(userBagrorg, maybeUserBagrorg)
@@ -59,7 +76,7 @@ internal class UserServiceTest {
         @Test
         fun `findUser should return null for unregistered user`() {
             userService.addUser(userBagrorg)
-            val maybeUser = userService.findUser(userNikita.username, userNikita.password)
+            val maybeUser = userService.loginUser(userNikita.username, userNikita.password)
             assertNull(maybeUser)
         }
     }
@@ -110,19 +127,16 @@ internal class UserServiceTest {
 
     // internal
 
-    private val tinkoffAccountMock = mock<TinkoffActualAccount>()
-    private val botServiceMock = mock<BotService>()
-    private val botsDatabaseMock = mock<BotsDatabase>()
-    private val strategyServiceMock = mock<StrategyService>()
-
-    private val userService = UserServiceMock(tinkoffAccountMock, botServiceMock, botsDatabaseMock, strategyServiceMock)
+    fun User.toDatabase() =
+        UsersDatabase.DatabaseUser(this.username, this.password, this.tinkoff)
 
     inner class UserServiceMock(
         private val tinkoffAccount: TinkoffActualAccount,
         private val botService: BotService,
+        usersDatabaseMock: UsersDatabase,
         botsDatabaseMock: BotsDatabase,
         strategyService: StrategyService,
-    ) : UserService(botsDatabaseMock, strategyService) {
+    ) : UserService(usersDatabaseMock, botsDatabaseMock, strategyService) {
 
         override fun initTinkoffAccount(user: User) =
             if (user.tinkoff == "fail")

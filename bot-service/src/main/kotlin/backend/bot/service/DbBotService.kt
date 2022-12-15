@@ -87,9 +87,10 @@ class DbBotService(
     override fun createBot(
         name: BotName,
         strategyUid: StrategyUid,
+        ownerUsername: String,
         parameters: Map<Int, String>
     ): Result<BotUid> {
-        val uid = db.createBot(name, strategyUid) ?: return Result.failure(BotCannotBeLoaded(name, strategyUid))
+        val uid = db.createBot(name, strategyUid, ownerUsername) ?: return Result.failure(BotCannotBeLoaded(name, strategyUid))
 
         parameters.forEach { (paramId, value) ->
             when (paramId) {

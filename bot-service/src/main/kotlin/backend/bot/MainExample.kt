@@ -17,6 +17,7 @@ fun main() {
     val figiParameterId = 0
     val balanceParameterId = 1
     val strategyId = 0
+    val ownerUsername = "username"
 
     val strategyService = SimpleStrategyService {
         registerParameter(0, HyperParameterInfo("balance", "balance", HyperParameterInfo.Type.FLOAT, min = 0.0))
@@ -59,7 +60,7 @@ fun main() {
         figiParameterId to "BBG004730N88",
     )
 
-    service.createBot("Sberbank", strategyId, parameters1)
+    service.createBot("Sberbank", strategyId, ownerUsername, parameters1)
 
 
     val parameters2 = mapOf(
@@ -67,5 +68,5 @@ fun main() {
         figiParameterId to "BBG006L8G4H1",
     )
 
-    service.createBot( "Yandex", strategyId, parameters2)
+    service.createBot( "Yandex", strategyId, ownerUsername, parameters2)
 }
