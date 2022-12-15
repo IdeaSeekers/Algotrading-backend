@@ -8,6 +8,7 @@ import backend.server.request.UserSignUpRequest
 import backend.server.response.*
 import de.nielsfalk.ktor.swagger.version.shared.Group
 import io.ktor.locations.*
+import java.time.Instant
 
 // strategy
 
@@ -129,8 +130,8 @@ class SwaggerBotOperations(val id: Int) {
     companion object {
         val responseExample = GetBotHistoryResponse(
             listOf(
-                GetBotHistoryResponse.Operation(GetBotHistoryResponse.Type.buy, "2022.11.27T14:22", 100.4, 0.0),
-                GetBotHistoryResponse.Operation(GetBotHistoryResponse.Type.sell, "2022.11.27T14:49", 101.1, 0.7),
+                GetBotHistoryResponse.Operation(GetBotHistoryResponse.Type.buy, Instant.parse("2022-11-27T14:22:00.0Z").epochSecond, 100.4, 0.0),
+                GetBotHistoryResponse.Operation(GetBotHistoryResponse.Type.sell, Instant.parse("2022-11-27T14:49:00.0Z").epochSecond, 101.1, 0.7),
             )
         )
     }
