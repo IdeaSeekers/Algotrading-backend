@@ -73,38 +73,42 @@ fun Route.postBot() {
                 ok<SwaggerBots>(example("model", SwaggerBots.responseExamplePost))
             )
         ) { _, botInfo ->
-            val securityId = botInfo.parameters[Id.figiHyperParameterUid].value.toInt()
-            val securityFigi = Services.tinkoffInfoService.getFigiById(securityId)
-                .onFailure { return@post call.badRequest(it.message) }
-                .getOrThrow()
+            try {
+                val securityId = botInfo.parameters[Id.figiHyperParameterUid].value.toInt()
+                val securityFigi = Services.tinkoffInfoService.getFigiById(securityId)
+                    .onFailure { return@post call.badRequest(it.message) }
+                    .getOrThrow()
 
-            val parameters = botInfo.parameters.associate { parameter ->
-                if (parameter.id == Id.figiHyperParameterUid)
-                    parameter.id to securityFigi
-                else
-                    parameter.id to parameter.value.toString()
+                val parameters = botInfo.parameters.associate { parameter ->
+                    if (parameter.id == Id.figiHyperParameterUid)
+                        parameter.id to securityFigi
+                    else
+                        parameter.id to parameter.value.toString()
+                }
+                // these parameters are added explicitly
+
+                val principal = call.principal<JWTPrincipal>()
+                    ?: return@post call.unauthorized()
+                val username = principal.payload.getClaim(JwtConfiguration.fieldName).asString()
+                val botService = Services.userService.getBotService(username)
+                    ?: return@post call.unauthorized()
+
+                botService.createBot(
+                    botInfo.name,
+                    botInfo.strategy.id,
+                    username,
+                    parameters
+                )
+                    .onSuccess { botId ->
+                        val bot = PostBotResponse.Bot(botId)
+                        call.respond(PostBotResponse(bot))
+                    }
+                    .onFailure {
+                        call.exception(it)
+                    }
+            } catch (e: Exception) {
+                throw e
             }
-            // these parameters are added explicitly
-
-            val principal = call.principal<JWTPrincipal>()
-                ?: return@post call.unauthorized()
-            val username = principal.payload.getClaim(JwtConfiguration.fieldName).asString()
-            val botService = Services.userService.getBotService(username)
-                ?: return@post call.unauthorized()
-
-            botService.createBot(
-                botInfo.name,
-                botInfo.strategy.id,
-                username,
-                parameters
-            )
-                .onSuccess { botId ->
-                    val bot = PostBotResponse.Bot(botId)
-                    call.respond(PostBotResponse(bot))
-                }
-                .onFailure {
-                    call.exception(it)
-                }
         }
     }
 }

@@ -101,6 +101,13 @@ open class UserService(
                 tinkoffAccountFactory
             )
             addCluster(Id.simpleStrategyUid, cluster)
+            val cluster2 = SimpleCluster(
+                Id.risingThreeMethodStrategyUid,
+                Id.balanceHyperParameterUid,
+                Id.figiHyperParameterUid,
+                tinkoffAccountFactory
+            )
+            addCluster(Id.risingThreeMethodStrategyUid, cluster2)
         }
 
     // internal fields

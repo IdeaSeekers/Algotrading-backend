@@ -6,4 +6,5 @@ object Id {
     const val balanceHyperParameterUid = 1
 
     const val simpleStrategyUid = 0
+    const val risingThreeMethodStrategyUid = 1
 }

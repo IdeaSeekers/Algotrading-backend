@@ -3,6 +3,7 @@ package backend.server
 import backend.common.model.Id
 import backend.common.model.Info.balanceHyperParameterInfo
 import backend.common.model.Info.figiHyperParameterInfo
+import backend.common.model.Info.risingThreeMethodStrategyInfo
 import backend.common.model.Info.simpleStrategyInfo
 import backend.db.bots.BotsDatabase
 import backend.db.bots.UsersDatabase
@@ -26,6 +27,11 @@ object Services {
         registerStrategy(
             Id.simpleStrategyUid,
             simpleStrategyInfo,
+            SimpleStrategyControllerFactory(::simpleStrategy)
+        )
+        registerStrategy(
+            Id.risingThreeMethodStrategyUid,
+            risingThreeMethodStrategyInfo,
             SimpleStrategyControllerFactory(::simpleStrategy)
         )
     }
